@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./images/Logo.jpg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+    <link href="./src/css/battle.css" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Figthing Game</title>
+  </head>
+  <body>
+    <audio>
+      <source src="./audio/Perimore - Misery Business Até Que Durou.mp3" type="audio/mpeg" >
+    </audio>
+    <div class="content">
+      <div class="life-bars">
+        <!-- player health -->
+        <div class="playerHealth-content">
+          <div class="playerHealth-aux"></div>
+          <div id="playerHealth" class="playerHealth-bar"></div>
+        </div>
+        <!-- timer -->
+        <div id="timer" class="timer">10</div>
+        <!-- enemy health -->
+        <div class="enemyHealth-content">
+          <div class="enemyHealth-aux"></div>
+          <div id="enemyHealth" class="enemyHealth-bar"></div>
+        </div>
+      </div>
+      <div id="displayText" class="result">Tie</div>
+      <canvas></canvas>
+    </div>
+    <script 
+      src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/gsap.min.js"
+      integrity="sha512-gmwBmiTVER57N3jYS3LinA9eb8aHrJua5iQD7yqYCKa5x6Jjc7VDVaEA0je0Lu0bP9j7tEjV3+1qUm6loO99Kw=="
+      crossorigin="anonymous" 
+      referrerpolicy="no-referrer"
+    ></script>
+    <script src="./src/utils.js"></script>
+    <script src="./src/classes.js"></script>
+    <script src="./src/main.js"></script>
+  </body>
+</html>
