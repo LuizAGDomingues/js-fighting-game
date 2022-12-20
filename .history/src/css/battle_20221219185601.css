@@ -1,0 +1,21 @@
+* {
+  box-sizing: border-box;
+  font-family: 'Press Start 2P', sans-serif;
+}
+
+.content {
+  position: relative;
+  display: inline-block;
+}
+
+.life-bars {
+  position: absolute;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  padding: 20px;
+}
+
+.playerHealth-content {
+  
+}

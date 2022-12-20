@@ -1,0 +1,66 @@
+* {
+  box-sizing: border-box;
+  font-family: 'Press Start 2P', sans-serif;
+}
+
+.content {
+  position: relative;
+  display: inline-block;
+}
+
+.life-bars {
+  position: absolute;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  padding: 20px;
+}
+
+.playerHealth-content {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 4px solid white;
+  border-left: 4px solid white;
+  border-bottom: 4px solid white;
+}
+
+.playerHealth-aux {
+  background-color: red;
+  height: 30px;
+  width: 100%;
+}
+
+.playerHealth-bar {
+  position: absolute;
+  background: #818CF8;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.timer {
+  background-color: black;
+  width: 100px;
+  height: 50px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border: 4px solid white;
+}
+
+.enemyHealth-content {
+  position: relative;
+  width: 100%;
+  border-top: 4px solid white;
+  border-right: 4px solid white;
+  border-bottom: 4px solid white;
+}
+
+.enemyHealth-aux {
+  
+}
