@@ -195,10 +195,10 @@ function animate() {
   enemy.velocity.x = 0
 
   // player movement
-  if(keys.a.pressed && player.lastKey === 'a' && player.position.x >= 0) {
+  if(keys.a.pressed && player.lastKey === 'a') {
     player.velocity.x = -5
     player.switchSprite('run')
-  } else if(keys.d.pressed && player.lastKey === 'd' && player.position.x <= canvas.width - 60) {
+  } else if(keys.d.pressed && player.lastKey === 'd') {
     player.velocity.x = 5
     player.switchSprite('run')
   } else {
@@ -212,10 +212,10 @@ function animate() {
   }
 
   // enemy movement
-  if(keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft' && enemy.position.x >= 0) {
+  if(keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft') {
     enemy.velocity.x = -5
     enemy.switchSprite('run')
-  } else if(keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight' && enemy.position.x <= canvas.width - 50) {
+  } else if(keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight') {
     enemy.velocity.x = 5
     enemy.switchSprite('run')
   } else {
@@ -276,7 +276,8 @@ window.addEventListener('keydown', (event) => {
         player.lastKey = 'a'
         break
       case 'w':
-        if(player.image === player.sprites.jump.image || player.image === player.sprites.fall.image) {
+        if(player.image === player.sprites.jump.image) {
+
           break
         }
         player.velocity.y = -20
@@ -297,9 +298,6 @@ window.addEventListener('keydown', (event) => {
         enemy.lastKey = 'ArrowLeft'
         break
       case 'ArrowUp':
-        if(enemy.image === enemy.sprites.jump.image || enemy.image === enemy.sprites.fall.image) {
-          break
-        }
         enemy.velocity.y = -20
         break
       case 'ArrowDown':

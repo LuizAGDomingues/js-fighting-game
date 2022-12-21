@@ -212,10 +212,10 @@ function animate() {
   }
 
   // enemy movement
-  if(keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft' && enemy.position.x >= 0) {
+  if(keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft') {
     enemy.velocity.x = -5
     enemy.switchSprite('run')
-  } else if(keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight' && enemy.position.x <= canvas.width - 50) {
+  } else if(keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight') {
     enemy.velocity.x = 5
     enemy.switchSprite('run')
   } else {
