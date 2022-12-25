@@ -77,6 +77,7 @@ class Fighter extends Sprite {
     }
     this.color = color
     this.isAttacking
+    this.isFacingRight = false
     this.health = 100
     this.framesCurrent = 0
     this.framesElapsed = 0
@@ -93,6 +94,10 @@ class Fighter extends Sprite {
   update() {
     this.draw()
     if(!this.dead) this.animateFrames()
+
+    if(this.isFacingRight === false) {
+      c.rotate()
+    }
 
     this.attackBox.position.x = this.position.x + this.attackBox.offset.x
     this.attackBox.position.y = this.position.y + this.attackBox.offset.y

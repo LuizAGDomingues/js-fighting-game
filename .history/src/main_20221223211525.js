@@ -207,7 +207,7 @@ function animate() {
   if(keys.a.pressed && player.lastKey === 'a' && player.position.x >= 0 && player.image != player.sprites.attack1.image) {
     player.velocity.x = -5
     player.switchSprite('run')
-  } else if(keys.d.pressed && player.lastKey === 'd' && player.position.x <= canvas.width - 60 && player.image != player.sprites.attack1.image) {
+  } else if(keys.d.pressed && player.lastKey === 'd' && player.position.x <= canvas.width - 60) {
     player.velocity.x = 5
     player.switchSprite('run')
   } else {

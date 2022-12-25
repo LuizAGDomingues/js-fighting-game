@@ -1,7 +1,7 @@
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
 
-canvas.width = 1024
+canvas.width = window.innerWidth
 canvas.height = 576
 
 c.fillRect(0, 0, canvas.width, canvas.height)
@@ -15,7 +15,11 @@ const background = new Sprite({
     x: 0,
     y: 0
   },
-  imageSrc: '../images/background.png'
+  imageSrc: '../images/background.png',
+  scale: {
+    x: 1,
+    y: 1
+  }
 })
 
 const shop = new Sprite({

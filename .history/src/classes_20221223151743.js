@@ -1,6 +1,8 @@
 class Sprite {
-  constructor({position, imageSrc, scale = { x: 1, y: 1 }, framesMax = 1, offset = { x: 0, y: 0 }}) {
+  constructor({position, imageSrc, scale = = { x: 1, y: 1 }, framesMax = 1, offset = { x: 0, y: 0 }}) {
     this.position = position
+    this.width = 50
+    this.height = 150
     this.image = new Image()
     this.image.src = imageSrc
     this.scale = scale
@@ -20,8 +22,8 @@ class Sprite {
       this.image.height,
       this.position.x - this.offset.x, 
       this.position.y - this.offset.y, 
-      (this.image.width / this.framesMax) * this.scale.x, 
-      this.image.height * this.scale.y
+      (this.image.width / this.framesMax) * this.scale, 
+      this.image.height * this.scale
     )
   }
 
@@ -48,7 +50,7 @@ class Fighter extends Sprite {
     velocity, 
     color = 'red', 
     imageSrc, 
-    scale = { x: 1, y: 1 }, 
+    scale = 1, 
     framesMax = 1, 
     offset = { x: 0, y: 0 },
     sprites,

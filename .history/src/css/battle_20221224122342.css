@@ -13,6 +13,7 @@ body {
   background-image: url(../../images/background.png);
   background-repeat: no-repeat;
   background-size: cover;
+  opacity: 50%;
 }
 
 .content {

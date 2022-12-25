@@ -24,10 +24,7 @@ const shop = new Sprite({
     y: 128
   },
   imageSrc: '../images/shop.png',
-  scale: {
-    x: 2.75,
-    y: 2.75
-  },
+  scale: {2.75,
   framesMax: 6
 })
 
@@ -46,10 +43,7 @@ const player = new Fighter({
   },
   imageSrc: '../images/samuraiMack/Idle.png',
   framesMax: 8,
-  scale: {
-    x: 2.5,
-    y: 2.5
-  },
+  scale: 2.5,
   offset: {
     x: 215,
     y: 155
@@ -110,10 +104,7 @@ const enemy = new Fighter({
   },
   imageSrc: '../images/kenji/Idle.png',
   framesMax: 4,
-  scale: {
-    x: 2.5,
-    y: 2.5
-  },
+  scale: 2.5,
   offset: {
     x: 215,
     y: 167
@@ -204,10 +195,10 @@ function animate() {
   enemy.velocity.x = 0
 
   // player movement
-  if(keys.a.pressed && player.lastKey === 'a' && player.position.x >= 0 && player.image != player.sprites.attack1.image) {
+  if(keys.a.pressed && player.lastKey === 'a' && player.position.x >= 0) {
     player.velocity.x = -5
     player.switchSprite('run')
-  } else if(keys.d.pressed && player.lastKey === 'd' && player.position.x <= canvas.width - 60 && player.image != player.sprites.attack1.image) {
+  } else if(keys.d.pressed && player.lastKey === 'd' && player.position.x <= canvas.width - 60) {
     player.velocity.x = 5
     player.switchSprite('run')
   } else {

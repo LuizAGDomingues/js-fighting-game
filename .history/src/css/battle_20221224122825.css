@@ -15,9 +15,14 @@ body {
   background-size: cover;
 }
 
+.opacity-content {
+  
+}
+
 .content {
   position: relative;
   display: inline-block;
+  
 }
 
 .life-bars {

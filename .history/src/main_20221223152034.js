@@ -111,7 +111,7 @@ const enemy = new Fighter({
   imageSrc: '../images/kenji/Idle.png',
   framesMax: 4,
   scale: {
-    x: 2.5,
+    x: -2.5,
     y: 2.5
   },
   offset: {
@@ -204,10 +204,10 @@ function animate() {
   enemy.velocity.x = 0
 
   // player movement
-  if(keys.a.pressed && player.lastKey === 'a' && player.position.x >= 0 && player.image != player.sprites.attack1.image) {
+  if(keys.a.pressed && player.lastKey === 'a' && player.position.x >= 0) {
     player.velocity.x = -5
     player.switchSprite('run')
-  } else if(keys.d.pressed && player.lastKey === 'd' && player.position.x <= canvas.width - 60 && player.image != player.sprites.attack1.image) {
+  } else if(keys.d.pressed && player.lastKey === 'd' && player.position.x <= canvas.width - 60) {
     player.velocity.x = 5
     player.switchSprite('run')
   } else {

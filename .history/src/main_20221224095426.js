@@ -3,8 +3,10 @@ const c = canvas.getContext('2d');
 
 canvas.width = 1024
 canvas.height = 576
+const screenWidth = window.innerWidth
+const screenHeight = window.innerHeight
 
-c.fillRect(0, 0, canvas.width, canvas.height)
+c.fillRect(((screenWidth / 2) - (canvas.width / 2)), ((screenHeight / 2) - (canvas.height / 2)), canvas.width, canvas.height)
 
 const gravity = .7
 
@@ -12,8 +14,8 @@ var gameIsOver = false
 
 const background = new Sprite({
   position: {
-    x: 0,
-    y: 0
+    x: ((screenWidth / 2) - (canvas.width / 2)),
+    y: ((screenHeight / 2) - (canvas.height / 2))
   },
   imageSrc: '../images/background.png'
 })

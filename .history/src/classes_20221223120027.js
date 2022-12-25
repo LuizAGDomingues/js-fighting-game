@@ -1,6 +1,8 @@
 class Sprite {
-  constructor({position, imageSrc, scale = { x: 1, y: 1 }, framesMax = 1, offset = { x: 0, y: 0 }}) {
+  constructor({position, imageSrc, scale = 1, framesMax = 1, offset = { x: 0, y: 0 }}) {
     this.position = position
+    this.width = 50
+    this.height = 150
     this.image = new Image()
     this.image.src = imageSrc
     this.scale = scale
@@ -20,9 +22,11 @@ class Sprite {
       this.image.height,
       this.position.x - this.offset.x, 
       this.position.y - this.offset.y, 
-      (this.image.width / this.framesMax) * this.scale.x, 
-      this.image.height * this.scale.y
+      (this.image.width / this.framesMax) * this.scale, 
+      this.image.height * this.scale
     )
+
+    
   }
 
   animateFrames() {
@@ -48,7 +52,7 @@ class Fighter extends Sprite {
     velocity, 
     color = 'red', 
     imageSrc, 
-    scale = { x: 1, y: 1 }, 
+    scale = 1, 
     framesMax = 1, 
     offset = { x: 0, y: 0 },
     sprites,
@@ -78,6 +82,7 @@ class Fighter extends Sprite {
     this.color = color
     this.isAttacking
     this.health = 100
+    this.facingRight = true
     this.framesCurrent = 0
     this.framesElapsed = 0
     this.framesHold = 5
@@ -108,7 +113,6 @@ class Fighter extends Sprite {
       this.velocity.y = 0
       this.position.y = 330
     } else this.velocity.y += gravity
-
   }
 
   attack() {

@@ -23,6 +23,7 @@ class Sprite {
       (this.image.width / this.framesMax) * this.scale.x, 
       this.image.height * this.scale.y
     )
+    console.log(this.image)
   }
 
   animateFrames() {

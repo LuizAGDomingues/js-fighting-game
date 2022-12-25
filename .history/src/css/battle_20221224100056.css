@@ -11,8 +11,7 @@ body {
   margin: 10rem 0;
   overflow: hidden;
   background-image: url(../../images/background.png);
-  background-repeat: no-repeat;
-  background-size: cover;
+  background-repeat: ;
 }
 
 .content {

@@ -15,7 +15,8 @@ const background = new Sprite({
     x: 0,
     y: 0
   },
-  imageSrc: '../images/background.png'
+  imageSrc: '../images/background.png',
+  scale
 })
 
 const shop = new Sprite({

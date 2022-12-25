@@ -18,6 +18,7 @@ body {
 .content {
   position: relative;
   display: inline-block;
+  background-color: rgba(255, 255, 255, );
 }
 
 .life-bars {
