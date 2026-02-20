@@ -1,42 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./images/Logo.jpg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
-    <link href="./src/css/battle.css" rel="stylesheet" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Figthing Game</title>
-  </head>
-  <body>
-    <div class="content">
-      <div class="life-bars">
-        <!-- player health -->
-        <div class="playerHealth-content">
-          <div class="playerHealth-aux"></div>
-          <div id="playerHealth" class="playerHealth-bar"></div>
-        </div>
-        <!-- timer -->
-        <div id="timer" class="timer">10</div>
-        <!-- enemy health -->
-        <div class="enemyHealth-content">
-          <div class="enemyHealth-aux"></div>
-          <div id="enemyHealth" class="enemyHealth-bar"></div>
-        </div>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="./images/Logo.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link href="./src/css/battle.css" rel="stylesheet" />
+  <link href="./src/css/menu.css" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fighting Game</title>
+</head>
+
+<body>
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-content">
+      <p class="loading-text">CARREGANDO...</p>
+      <div class="loading-bar-container">
+        <div id="loading-bar" class="loading-bar"></div>
       </div>
-      <div id="displayText" class="result">Tie</div>
-      <canvas style="border-radius: 4px; border: 2px solid black;"></canvas>
     </div>
-    <script 
-      src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/gsap.min.js"
-      integrity="sha512-gmwBmiTVER57N3jYS3LinA9eb8aHrJua5iQD7yqYCKa5x6Jjc7VDVaEA0je0Lu0bP9j7tEjV3+1qUm6loO99Kw=="
-      crossorigin="anonymous" 
-      referrerpolicy="no-referrer"
-    ></script>
-    <script src="./src/utils.js"></script>
-    <script src="./src/classes.js"></script>
-    <script src="./src/main.js"></script>
-  </body>
+  </div>
+
+  <!-- ===== SCENE OVERLAYS ===== -->
+
+  <!-- Main Menu -->
+  <div id="main-menu" class="scene-overlay">
+    <img src="./images/Logo.jpg" alt="Logo" class="menu-logo" />
+    <div class="menu-title">FIGHTING GAME</div>
+    <div class="menu-buttons">
+      <button class="menu-btn selected" data-action="versus">VERSUS (2P)</button>
+      <button class="menu-btn" data-action="arcade">ARCADE (vs CPU)</button>
+      <button class="menu-btn" data-action="training">TREINO</button>
+      <button class="menu-btn" data-action="settings">CONFIGURAÇÕES</button>
+      <button class="menu-btn" data-action="howtoplay">COMO JOGAR</button>
+    </div>
+  </div>
+
+  <!-- Character Select -->
+  <div id="character-select" class="scene-overlay">
+    <div class="cs-title">SELECIONE SEU LUTADOR</div>
+    <div class="cs-mode-label">VERSUS</div>
+    <div class="cs-difficulty" style="display:none;">
+      <span class="diff-label">DIFICULDADE:</span>
+      <button class="diff-btn" data-difficulty="easy">FÁCIL</button>
+      <button class="diff-btn active" data-difficulty="medium">MÉDIO</button>
+      <button class="diff-btn" data-difficulty="hard">DIFÍCIL</button>
+    </div>
+    <div class="cs-panels">
+      <!-- P1 Panel -->
+      <div class="cs-panel p1">
+        <div class="cs-panel-title">PLAYER 1</div>
+        <div class="cs-grid"></div>
+        <div class="cs-stats"></div>
+        <div class="cs-ready">PRONTO!</div>
+      </div>
+      <!-- P2 Panel -->
+      <div class="cs-panel p2">
+        <div class="cs-panel-title">PLAYER 2</div>
+        <div class="cs-grid"></div>
+        <div class="cs-stats"></div>
+        <div class="cs-ready">PRONTO!</div>
+      </div>
+    </div>
+    <div class="cs-countdown"></div>
+    <div class="cs-controls-hint">P1: A/D NAVEGAR · W CONFIRMAR · S VOLTAR &nbsp;|&nbsp; P2: ←/→ NAVEGAR · ↑ CONFIRMAR ·
+      ↓ VOLTAR &nbsp;|&nbsp; ESC MENU</div>
+  </div>
+
+  <!-- Pause Overlay -->
+  <div id="pause-overlay" class="scene-overlay">
+    <div class="pause-title">PAUSADO</div>
+    <div class="pause-buttons">
+      <button class="menu-btn selected" data-action="resume">CONTINUAR</button>
+      <button class="menu-btn" data-action="restart">REINICIAR</button>
+      <button class="menu-btn" data-action="menu">MENU PRINCIPAL</button>
+    </div>
+  </div>
+
+  <!-- Post Match -->
+  <div id="post-match" class="scene-overlay">
+    <div class="pm-winner"></div>
+    <div class="pm-stats"></div>
+    <div class="pm-buttons">
+      <button class="menu-btn selected" data-action="rematch">REVANCHE</button>
+      <button class="menu-btn" data-action="charselect">SELEÇÃO DE PERSONAGEM</button>
+      <button class="menu-btn" data-action="menu">MENU PRINCIPAL</button>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-title">CONFIGURAÇÕES</div>
+      <div class="settings-row">
+        <label>MÚSICA</label>
+        <input type="range" id="music-volume" min="0" max="100" value="50" />
+        <span class="volume-value" id="music-vol-val">50</span>
+      </div>
+      <div class="settings-row">
+        <label>EFEITOS</label>
+        <input type="range" id="sfx-volume" min="0" max="100" value="70" />
+        <span class="volume-value" id="sfx-vol-val">70</span>
+      </div>
+      <button class="modal-close">FECHAR</button>
+    </div>
+  </div>
+
+  <!-- How to Play Modal -->
+  <div id="howtoplay-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-title">COMO JOGAR</div>
+      <table class="controls-table">
+        <thead>
+          <tr>
+            <th>AÇÃO</th>
+            <th>PLAYER 1</th>
+            <th>PLAYER 2</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Mover</td>
+            <td><span class="key">A</span> / <span class="key">D</span></td>
+            <td><span class="key">←</span> / <span class="key">→</span></td>
+          </tr>
+          <tr>
+            <td>Pular</td>
+            <td><span class="key">W</span></td>
+            <td><span class="key">↑</span></td>
+          </tr>
+          <tr>
+            <td>Ataque 1</td>
+            <td><span class="key">SPACE</span></td>
+            <td><span class="key">↓</span></td>
+          </tr>
+          <tr>
+            <td>Ataque 2</td>
+            <td><span class="key">E</span></td>
+            <td><span class="key">ENTER</span></td>
+          </tr>
+          <tr>
+            <td>Bloquear</td>
+            <td><span class="key">S</span></td>
+            <td><span class="key">SHIFT</span></td>
+          </tr>
+          <tr>
+            <td>Dash</td>
+            <td colspan="2">Toque duplo na direção</td>
+          </tr>
+          <tr>
+            <td>Pausar</td>
+            <td colspan="2"><span class="key">ESC</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <button class="modal-close">FECHAR</button>
+    </div>
+  </div>
+
+  <!-- ===== GAME CANVAS + HUD ===== -->
+  <div class="content hud-hidden">
+    <div class="life-bars">
+      <!-- player health -->
+      <div class="playerHealth-content">
+        <div class="playerHealth-aux"></div>
+        <div id="playerHealth" class="playerHealth-bar"></div>
+        <div id="p1-rounds" class="round-indicators"></div>
+      </div>
+      <!-- timer -->
+      <div id="timer" class="timer">90</div>
+      <!-- enemy health -->
+      <div class="enemyHealth-content">
+        <div class="enemyHealth-aux"></div>
+        <div id="enemyHealth" class="enemyHealth-bar"></div>
+        <div id="p2-rounds" class="round-indicators"></div>
+      </div>
+    </div>
+    <div id="displayText" class="result"></div>
+    <canvas style="border-radius: 4px; border: 2px solid black;"></canvas>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/gsap.min.js"
+    integrity="sha512-gmwBmiTVER57N3jYS3LinA9eb8aHrJua5iQD7yqYCKa5x6Jjc7VDVaEA0je0Lu0bP9j7tEjV3+1qUm6loO99Kw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script type="module" src="./src/main.js"></script>
+</body>
+
 </html>

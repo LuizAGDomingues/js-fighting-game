@@ -1,0 +1,639 @@
+/* ===================================================
+   MENU.CSS — Estilos para todos os overlays de cena
+   =================================================== */
+
+/* ===== Shared Overlay Base ===== */
+.scene-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  font-family: 'Press Start 2P', monospace;
+  color: #fff;
+}
+
+.scene-overlay.active {
+  display: flex;
+}
+
+/* ===== Main Menu ===== */
+#main-menu {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(10, 5, 30, 0.95) 100%);
+  flex-direction: column;
+  gap: 16px;
+}
+
+.menu-logo {
+  width: 220px;
+  height: auto;
+  border-radius: 12px;
+  border: 3px solid rgba(129, 140, 248, 0.6);
+  box-shadow: 0 0 30px rgba(129, 140, 248, 0.4), 0 0 60px rgba(129, 140, 248, 0.15);
+  margin-bottom: 8px;
+  animation: logoPulse 3s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 30px rgba(129, 140, 248, 0.4), 0 0 60px rgba(129, 140, 248, 0.15);
+  }
+
+  50% {
+    box-shadow: 0 0 40px rgba(129, 140, 248, 0.7), 0 0 80px rgba(129, 140, 248, 0.3);
+  }
+}
+
+.menu-title {
+  font-size: 28px;
+  text-transform: uppercase;
+  letter-spacing: 6px;
+  background: linear-gradient(135deg, #818CF8, #C084FC, #818CF8);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: titleShine 4s linear infinite;
+  margin-bottom: 24px;
+  text-shadow: none;
+}
+
+@keyframes titleShine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 280px;
+}
+
+/* ===== Shared Button Style ===== */
+.menu-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: #C8D0FF;
+  background: rgba(129, 140, 248, 0.08);
+  border: 2px solid rgba(129, 140, 248, 0.3);
+  padding: 14px 20px;
+  cursor: pointer;
+  text-align: center;
+  letter-spacing: 2px;
+  transition: all 0.2s ease;
+  outline: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(129, 140, 248, 0.1), transparent);
+  transition: left 0.4s ease;
+}
+
+.menu-btn:hover::before,
+.menu-btn:focus::before {
+  left: 100%;
+}
+
+.menu-btn:hover,
+.menu-btn:focus,
+.menu-btn.selected {
+  color: #fff;
+  border-color: #818CF8;
+  background: rgba(129, 140, 248, 0.2);
+  box-shadow: 0 0 15px rgba(129, 140, 248, 0.3), inset 0 0 15px rgba(129, 140, 248, 0.08);
+  transform: scale(1.03);
+}
+
+.menu-btn:active {
+  transform: scale(0.97);
+}
+
+/* Menu button arrow indicator */
+.menu-btn.selected::after {
+  content: '▶';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: #818CF8;
+  animation: arrowBlink 0.8s ease-in-out infinite;
+}
+
+@keyframes arrowBlink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* ===== Character Select ===== */
+#character-select {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, rgba(10, 5, 30, 0.97) 100%);
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cs-title {
+  font-size: 18px;
+  letter-spacing: 4px;
+  color: #C084FC;
+  text-shadow: 0 0 20px rgba(192, 132, 252, 0.5);
+}
+
+.cs-panels {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.cs-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-width: 300px;
+}
+
+.cs-panel-label {
+  font-size: 14px;
+  letter-spacing: 3px;
+  padding: 6px 16px;
+  border-bottom: 2px solid;
+}
+
+.cs-panel.p1 .cs-panel-label {
+  color: #818CF8;
+  border-color: #818CF8;
+}
+
+.cs-panel.p2 .cs-panel-label {
+  color: #F472B6;
+  border-color: #F472B6;
+}
+
+.cs-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.cs-char-card {
+  width: 90px;
+  height: 90px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cs-char-card:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.cs-char-card.selected {
+  border-color: #818CF8;
+  box-shadow: 0 0 20px rgba(129, 140, 248, 0.4), inset 0 0 15px rgba(129, 140, 248, 0.1);
+}
+
+.cs-panel.p2 .cs-char-card.selected {
+  border-color: #F472B6;
+  box-shadow: 0 0 20px rgba(244, 114, 182, 0.4), inset 0 0 15px rgba(244, 114, 182, 0.1);
+}
+
+.cs-char-card.confirmed {
+  border-color: #34D399;
+  box-shadow: 0 0 20px rgba(52, 211, 153, 0.5);
+}
+
+.cs-char-card img {
+  max-width: 80%;
+  max-height: 80%;
+  image-rendering: pixelated;
+}
+
+.cs-char-name {
+  font-size: 10px;
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 2px 0;
+  letter-spacing: 1px;
+}
+
+.cs-preview {
+  width: 180px;
+  height: 220px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cs-preview canvas {
+  image-rendering: pixelated;
+}
+
+.cs-stats {
+  font-size: 8px;
+  line-height: 2;
+  color: #94A3B8;
+  text-align: center;
+}
+
+.cs-ready {
+  font-size: 16px;
+  color: #34D399;
+  text-shadow: 0 0 20px rgba(52, 211, 153, 0.6);
+  animation: readyPulse 1s ease-in-out infinite;
+  display: none;
+}
+
+.cs-ready.visible {
+  display: block;
+}
+
+@keyframes readyPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+.cs-countdown {
+  position: absolute;
+  font-size: 48px;
+  color: #fff;
+  text-shadow: 0 0 40px rgba(129, 140, 248, 0.8);
+  display: none;
+  z-index: 10;
+}
+
+.cs-countdown.visible {
+  display: block;
+  animation: countdownPop 0.5s ease-out;
+}
+
+@keyframes countdownPop {
+  from {
+    transform: scale(2);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.cs-controls-hint {
+  font-size: 7px;
+  color: #64748B;
+  letter-spacing: 1px;
+  margin-top: 8px;
+}
+
+/* ===== Pause Overlay ===== */
+#pause-overlay {
+  background: rgba(0, 0, 0, 0.75);
+  flex-direction: column;
+  gap: 20px;
+  backdrop-filter: blur(4px);
+  z-index: 200;
+}
+
+.pause-title {
+  font-size: 24px;
+  letter-spacing: 6px;
+  color: #818CF8;
+  text-shadow: 0 0 25px rgba(129, 140, 248, 0.5);
+}
+
+.pause-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 240px;
+}
+
+/* ===== Post Match ===== */
+#post-match {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(10, 5, 30, 0.95) 100%);
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pm-winner {
+  font-size: 22px;
+  letter-spacing: 4px;
+  text-shadow: 0 0 30px rgba(129, 140, 248, 0.6);
+  animation: winnerGlow 2s ease-in-out infinite;
+}
+
+@keyframes winnerGlow {
+
+  0%,
+  100% {
+    text-shadow: 0 0 30px rgba(129, 140, 248, 0.6);
+  }
+
+  50% {
+    text-shadow: 0 0 50px rgba(192, 132, 252, 0.8), 0 0 80px rgba(129, 140, 248, 0.4);
+  }
+}
+
+.pm-stats {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 6px 20px;
+  font-size: 8px;
+  color: #94A3B8;
+  text-align: center;
+  min-width: 400px;
+}
+
+.pm-stats .stat-label {
+  color: #64748B;
+  grid-column: 2;
+}
+
+.pm-stats .stat-p1 {
+  text-align: right;
+  color: #818CF8;
+}
+
+.pm-stats .stat-p2 {
+  text-align: left;
+  color: #F472B6;
+}
+
+.pm-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 260px;
+  margin-top: 10px;
+}
+
+/* ===== Modal (Settings / How to Play) ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  backdrop-filter: blur(6px);
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-box {
+  background: linear-gradient(135deg, rgba(20, 15, 50, 0.98), rgba(10, 8, 30, 0.98));
+  border: 2px solid rgba(129, 140, 248, 0.3);
+  box-shadow: 0 0 40px rgba(129, 140, 248, 0.15);
+  padding: 30px 40px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-title {
+  font-size: 14px;
+  color: #C084FC;
+  letter-spacing: 3px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.modal-close {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #94A3B8;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 8px 16px;
+  cursor: pointer;
+  margin-top: 20px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  color: #fff;
+  border-color: #818CF8;
+}
+
+/* Settings sliders */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  font-size: 9px;
+}
+
+.settings-row label {
+  color: #C8D0FF;
+  min-width: 100px;
+}
+
+.settings-row input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 160px;
+  height: 6px;
+  background: rgba(129, 140, 248, 0.2);
+  border-radius: 3px;
+  outline: none;
+}
+
+.settings-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #818CF8;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(129, 140, 248, 0.6);
+}
+
+.settings-row .volume-value {
+  color: #818CF8;
+  min-width: 30px;
+  text-align: right;
+}
+
+/* How to play table */
+.controls-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8px;
+}
+
+.controls-table th {
+  color: #C084FC;
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(129, 140, 248, 0.3);
+  text-align: left;
+}
+
+.controls-table td {
+  color: #94A3B8;
+  padding: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.controls-table .key {
+  color: #818CF8;
+  background: rgba(129, 140, 248, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 7px;
+}
+
+/* ===== HUD visibility control ===== */
+.hud-hidden .life-bars,
+.hud-hidden .result {
+  display: none !important;
+}
+
+/* ===== Character Select: Panel Title (alias for label) ===== */
+.cs-panel-title {
+  font-size: 14px;
+  letter-spacing: 3px;
+  padding: 6px 16px;
+  border-bottom: 2px solid;
+}
+
+.cs-panel.p1 .cs-panel-title {
+  color: #818CF8;
+  border-color: #818CF8;
+}
+
+.cs-panel.p2 .cs-panel-title {
+  color: #F472B6;
+  border-color: #F472B6;
+}
+
+/* ===== Character Select: Mode Label ===== */
+.cs-mode-label {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #818CF8;
+  background: rgba(129, 140, 248, 0.1);
+  padding: 4px 16px;
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  border-radius: 4px;
+}
+
+/* ===== Character Select: Difficulty Selector ===== */
+.cs-difficulty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: -8px;
+}
+
+.diff-label {
+  font-size: 8px;
+  color: #94A3B8;
+  letter-spacing: 1px;
+}
+
+.diff-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #94A3B8;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.diff-btn:hover {
+  color: #C8D0FF;
+  border-color: rgba(129, 140, 248, 0.5);
+}
+
+.diff-btn.active {
+  color: #fff;
+  background: rgba(129, 140, 248, 0.2);
+  border-color: #818CF8;
+  box-shadow: 0 0 10px rgba(129, 140, 248, 0.3);
+}
+
+/* ===== HUD: Round Indicators ===== */
+.round-indicators {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin-top: 2px;
+  min-height: 10px;
+}
+
+.round-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.round-dot.won {
+  background: #34D399;
+  border-color: #34D399;
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.6);
+}
