@@ -3,7 +3,8 @@ export const kenji = {
   name: 'Kenji',
   spriteBasePath: './images/kenji',
   scale: { x: 2.5, y: 2.5 },
-  offset: { x: 215, y: 167 },
+  offset: { x: 231, y: 170 },
+  spriteFacingRight: false,
   stats: {
     health: 100,
     moveSpeed: 5.5,

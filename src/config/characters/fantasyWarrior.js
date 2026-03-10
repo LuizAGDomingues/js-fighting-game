@@ -3,7 +3,7 @@ export const fantasyWarrior = {
     name: 'Fantasy Warrior',
     spriteBasePath: './Characters/Fantasy Warrior/Sprites',
     scale: { x: 2.5, y: 2.5 },
-    offset: { x: 215, y: 155 },
+    offset: { x: 190, y: 102 },
     stats: {
         health: 110,
         moveSpeed: 4.8,

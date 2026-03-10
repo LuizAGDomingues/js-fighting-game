@@ -3,7 +3,7 @@ export const samuraiMack = {
   name: 'Samurai Mack',
   spriteBasePath: './images/samuraiMack',
   scale: { x: 2.5, y: 2.5 },
-  offset: { x: 215, y: 155 },
+  offset: { x: 211, y: 155 },
   stats: {
     health: 100,
     moveSpeed: 5,

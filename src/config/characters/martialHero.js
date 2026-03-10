@@ -3,7 +3,7 @@ export const martialHero = {
     name: 'Martial Hero',
     spriteBasePath: './Characters/Martial Hero 3/Sprite',
     scale: { x: 2.5, y: 2.5 },
-    offset: { x: 215, y: 155 },
+    offset: { x: 148, y: 55 },
     stats: {
         health: 100,
         moveSpeed: 5.2,

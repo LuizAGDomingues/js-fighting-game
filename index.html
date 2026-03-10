@@ -28,14 +28,34 @@
 
   <!-- Main Menu -->
   <div id="main-menu" class="scene-overlay">
-    <img src="./images/Logo.jpg" alt="Logo" class="menu-logo" />
-    <div class="menu-title">FIGHTING GAME</div>
-    <div class="menu-buttons">
-      <button class="menu-btn selected" data-action="versus">VERSUS (2P)</button>
-      <button class="menu-btn" data-action="arcade">ARCADE (vs CPU)</button>
-      <button class="menu-btn" data-action="training">TREINO</button>
-      <button class="menu-btn" data-action="settings">CONFIGURAÇÕES</button>
-      <button class="menu-btn" data-action="howtoplay">COMO JOGAR</button>
+    <div class="menu-shell">
+      <section class="menu-art">
+        <div class="menu-logo-frame">
+          <img src="./images/Logo.jpg" alt="Logo" class="menu-logo" />
+        </div>
+        <div class="menu-copy">
+          <div class="menu-kicker">PIXEL ARENA</div>
+          <div class="menu-title">FIGHTING GAME</div>
+          <p class="menu-subtitle">Duelo local, arcade e treino em uma arena retro com leitura melhor, selecao rapida e combate direto.</p>
+        </div>
+        <div class="menu-badges">
+          <span class="menu-badge">2P LOCAL</span>
+          <span class="menu-badge">ARCADE</span>
+          <span class="menu-badge">TREINO</span>
+        </div>
+      </section>
+
+      <section class="menu-panel">
+        <div class="menu-panel-header">SELECIONE UM MODO</div>
+        <div class="menu-buttons">
+          <button class="menu-btn selected" data-action="versus">VERSUS (2P)</button>
+          <button class="menu-btn" data-action="arcade">ARCADE (vs CPU)</button>
+          <button class="menu-btn" data-action="training">TREINO</button>
+          <button class="menu-btn" data-action="settings">CONFIGURACOES</button>
+          <button class="menu-btn" data-action="howtoplay">COMO JOGAR</button>
+        </div>
+        <div class="menu-help">W/S ou setas para navegar | ENTER para confirmar | ESC fecha modais</div>
+      </section>
     </div>
   </div>
 
@@ -180,7 +200,7 @@
       </div>
     </div>
     <div id="displayText" class="result"></div>
-    <canvas style="border-radius: 4px; border: 2px solid black;"></canvas>
+    <canvas></canvas>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.3/gsap.min.js"

@@ -3,7 +3,7 @@ export const medievalKing = {
     name: 'Medieval King',
     spriteBasePath: './Characters/Medieval King Pack 2/Sprites',
     scale: { x: 2.5, y: 2.5 },
-    offset: { x: 215, y: 155 },
+    offset: { x: 174, y: 112 },
     stats: {
         health: 120,
         moveSpeed: 4.2,

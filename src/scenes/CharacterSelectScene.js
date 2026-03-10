@@ -1,6 +1,6 @@
 import { CHARACTER_ROSTER } from '../config/characters/index.js';
-import { Sprite } from '../entities/Sprite.js';
 import { AIController } from '../ai/AIController.js';
+import { FRAME_HOLD_SECONDS } from '../config/constants.js';
 
 /**
  * CharacterSelectScene — Seleção de personagens para P1 e P2
@@ -22,8 +22,8 @@ export class CharacterSelectScene {
         this.gameMode = 'versus';
         this.aiDifficulty = 'medium';
 
-        // Preview sprites rendered on small canvases
-        this.previewSprites = { player: null, enemy: null };
+        // Animated idle previews rendered on the character cards
+        this.idleThumbnails = [];
 
         this._onKeyDown = this._onKeyDown.bind(this);
     }
@@ -87,6 +87,7 @@ export class CharacterSelectScene {
 
     exit() {
         this.overlay.classList.remove('active');
+        this.idleThumbnails = [];
         window.removeEventListener('keydown', this._onKeyDown);
     }
 
@@ -99,6 +100,8 @@ export class CharacterSelectScene {
 
     _buildGrids() {
         const roster = CHARACTER_ROSTER;
+        this.idleThumbnails = [];
+
         ['player', 'enemy'].forEach(playerId => {
             const panel = this.overlay.querySelector(`.cs-panel.${playerId === 'player' ? 'p1' : 'p2'}`);
             const grid = panel.querySelector('.cs-grid');
@@ -109,20 +112,31 @@ export class CharacterSelectScene {
                 card.className = 'cs-char-card';
                 card.dataset.index = i;
 
-                // Draw first frame of idle spritesheet as thumbnail
+                // Animate the idle spritesheet directly inside the card thumbnail
                 const idleSprite = this.game.assetLoader.get(`${char.spriteBasePath}/${char.sprites.idle.src}`);
                 const thumbCanvas = document.createElement('canvas');
                 const frameWidth = idleSprite.width / char.sprites.idle.framesMax;
                 const frameHeight = idleSprite.height;
-                thumbCanvas.width = frameWidth;
-                thumbCanvas.height = frameHeight;
                 const thumbCtx = thumbCanvas.getContext('2d');
-                thumbCtx.drawImage(idleSprite, 0, 0, frameWidth, frameHeight, 0, 0, frameWidth, frameHeight);
-                thumbCanvas.style.objectFit = 'contain';
-                thumbCanvas.style.maxWidth = '80%';
-                thumbCanvas.style.maxHeight = '80%';
+                thumbCanvas.width = 96;
+                thumbCanvas.height = 74;
+                thumbCanvas.className = 'cs-char-thumb';
                 thumbCanvas.style.imageRendering = 'pixelated';
                 card.appendChild(thumbCanvas);
+
+                this.idleThumbnails.push({
+                    canvas: thumbCanvas,
+                    ctx: thumbCtx,
+                    image: idleSprite,
+                    framesMax: char.sprites.idle.framesMax,
+                    frameWidth,
+                    frameHeight,
+                    frameBounds: this._computeFrameBounds(idleSprite, frameWidth, frameHeight, char.sprites.idle.framesMax),
+                    framesCurrent: 0,
+                    frameTimer: 0,
+                    frameHoldTime: FRAME_HOLD_SECONDS,
+                    spriteFacingRight: char.spriteFacingRight ?? true
+                });
 
                 const nameEl = document.createElement('div');
                 nameEl.className = 'cs-char-name';
@@ -139,6 +153,60 @@ export class CharacterSelectScene {
                 grid.appendChild(card);
             });
         });
+    }
+
+    _computeFrameBounds(image, frameWidth, frameHeight, framesMax) {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = frameWidth;
+        tempCanvas.height = frameHeight;
+        const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+        const bounds = [];
+
+        for (let frame = 0; frame < framesMax; frame++) {
+            tempCtx.clearRect(0, 0, frameWidth, frameHeight);
+            tempCtx.drawImage(
+                image,
+                frame * frameWidth,
+                0,
+                frameWidth,
+                frameHeight,
+                0,
+                0,
+                frameWidth,
+                frameHeight
+            );
+
+            const { data } = tempCtx.getImageData(0, 0, frameWidth, frameHeight);
+            let minX = frameWidth;
+            let minY = frameHeight;
+            let maxX = -1;
+            let maxY = -1;
+
+            for (let y = 0; y < frameHeight; y++) {
+                for (let x = 0; x < frameWidth; x++) {
+                    const alpha = data[(y * frameWidth + x) * 4 + 3];
+                    if (alpha > 0) {
+                        if (x < minX) minX = x;
+                        if (y < minY) minY = y;
+                        if (x > maxX) maxX = x;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+            }
+
+            if (maxX === -1 || maxY === -1) {
+                bounds.push({ x: 0, y: 0, width: frameWidth, height: frameHeight });
+            } else {
+                bounds.push({
+                    x: minX,
+                    y: minY,
+                    width: maxX - minX + 1,
+                    height: maxY - minY + 1
+                });
+            }
+        }
+
+        return bounds;
     }
 
     _updateSelectionUI() {
@@ -268,6 +336,8 @@ export class CharacterSelectScene {
     }
 
     update(deltaTime) {
+        this._updateIdleThumbnails(deltaTime);
+
         if (this.countdown !== null) {
             this.countdownTimer += deltaTime;
             if (this.countdownTimer >= 1) {
@@ -303,6 +373,61 @@ export class CharacterSelectScene {
                 }
             }
         }
+    }
+
+    _updateIdleThumbnails(deltaTime) {
+        this.idleThumbnails.forEach(preview => {
+            preview.frameTimer += deltaTime;
+            if (preview.frameTimer >= preview.frameHoldTime) {
+                preview.frameTimer -= preview.frameHoldTime;
+                preview.framesCurrent = (preview.framesCurrent + 1) % preview.framesMax;
+            }
+
+            const {
+                ctx,
+                canvas,
+                image,
+                frameWidth,
+                frameHeight,
+                frameBounds,
+                framesCurrent,
+                spriteFacingRight
+            } = preview;
+            const bounds = frameBounds[framesCurrent] || { x: 0, y: 0, width: frameWidth, height: frameHeight };
+            const paddingX = 8;
+            const paddingTop = 4;
+            const paddingBottom = 8;
+            const availableWidth = canvas.width - paddingX * 2;
+            const availableHeight = canvas.height - paddingTop - paddingBottom;
+            const scale = Math.min(availableWidth / bounds.width, availableHeight / bounds.height);
+            const drawWidth = bounds.width * scale;
+            const drawHeight = bounds.height * scale;
+            const drawX = (canvas.width - drawWidth) / 2;
+            const drawY = paddingTop + (availableHeight - drawHeight) / 2;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.imageSmoothingEnabled = false;
+            ctx.save();
+
+            if (!spriteFacingRight) {
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+            }
+
+            ctx.drawImage(
+                image,
+                framesCurrent * frameWidth + bounds.x,
+                bounds.y,
+                bounds.width,
+                bounds.height,
+                drawX,
+                drawY,
+                drawWidth,
+                drawHeight
+            );
+
+            ctx.restore();
+        });
     }
 
     render(ctx) {

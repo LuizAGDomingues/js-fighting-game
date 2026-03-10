@@ -1,4 +1,4 @@
-import { CANVAS_WIDTH, CANVAS_HEIGHT, JUMP_VELOCITY, MATCH_DURATION } from '../config/constants.js';
+﻿import { CANVAS_WIDTH, CANVAS_HEIGHT, JUMP_VELOCITY, MATCH_DURATION } from '../config/constants.js';
 import { Sprite } from '../entities/Sprite.js';
 import { Fighter, AnimState } from '../entities/Fighter.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
@@ -9,7 +9,7 @@ import { DamageNumbers } from '../effects/DamageNumbers.js';
 import { ComboDisplay } from '../effects/ComboDisplay.js';
 
 /**
- * BattleScene — Contém toda a lógica de batalha
+ * BattleScene â€” ContÃ©m toda a lÃ³gica de batalha
  */
 export class BattleScene {
     constructor() {
@@ -60,6 +60,8 @@ export class BattleScene {
         // Background cache (off-screen canvas)
         this._bgCache = null;
 
+        this.showTrainingHitboxes = false;
+
         this._onKeyDown = this._onKeyDown.bind(this);
     }
 
@@ -88,6 +90,7 @@ export class BattleScene {
             enemy: { damageDealt: 0, hits: 0, maxCombo: 0, blocks: 0 }
         };
         this._dustTimers = { player: 0, enemy: 0 };
+        this.showTrainingHitboxes = false;
 
         // Reset effects
         this.screenShake.reset();
@@ -120,6 +123,10 @@ export class BattleScene {
     _onKeyDown(e) {
         if (e.key === 'Escape' && !this.gameIsOver) {
             this._togglePause();
+        }
+
+        if ((e.key === 'h' || e.key === 'H') && this.gameMode === 'training') {
+            this.showTrainingHitboxes = !this.showTrainingHitboxes;
         }
 
         // Audio init on first keypress
@@ -213,6 +220,8 @@ export class BattleScene {
             characterConfig: eConfig
         });
         this.enemy.facingRight = false;
+        this.player.updateAttackBox();
+        this.enemy.updateAttackBox();
     }
 
     update(deltaTime) {
@@ -260,20 +269,27 @@ export class BattleScene {
         if (this.gameMode === 'arcade' && this.aiController) {
             this._handleAIInput(enemy, deltaTime);
         } else if (this.gameMode === 'training') {
-            // Training dummy does nothing
+            this._handleTrainingDummy(enemy);
         } else {
             this._handleFighterInput(enemy, 'enemy');
         }
 
-        // Dust particles when running on ground
-        this._handleDustParticles(player, 'player', deltaTime);
-        this._handleDustParticles(enemy, 'enemy', deltaTime);
+        // Update entities before resolving hits so collision matches the rendered frame
+        player.update(deltaTime);
+        enemy.update(deltaTime);
 
         // Auto-face opponents toward each other
         if (!player.dead && !enemy.dead) {
             player.facingRight = player.position.x < enemy.position.x;
             enemy.facingRight = enemy.position.x < player.position.x;
         }
+
+        player.updateAttackBox();
+        enemy.updateAttackBox();
+
+        // Dust particles when running on ground
+        this._handleDustParticles(player, 'player', deltaTime);
+        this._handleDustParticles(enemy, 'enemy', deltaTime);
 
         // Player hits enemy
         if (collision.checkAttackHit(player, enemy)) {
@@ -351,10 +367,6 @@ export class BattleScene {
         collision.resetAttackState(player);
         collision.resetAttackState(enemy);
 
-        // Update entities
-        player.update(deltaTime);
-        enemy.update(deltaTime);
-
         // Training mode: health regen
         if (this.gameMode === 'training') {
             enemy.health = enemy.maxHealth;
@@ -394,11 +406,33 @@ export class BattleScene {
         this._applyAIActions(fighter, actions);
     }
 
+    _handleTrainingDummy(fighter) {
+        if (fighter.dead) return;
+
+        fighter.block(false);
+
+        if (!fighter.isDashing && fighter.currentState !== AnimState.TAKE_HIT) {
+            fighter.velocity.x = 0;
+        }
+
+        if (fighter.velocity.y < 0) {
+            fighter.switchSprite(AnimState.JUMP);
+            return;
+        }
+
+        if (fighter.velocity.y > 0) {
+            fighter.switchSprite(AnimState.FALL);
+            return;
+        }
+
+        if (!fighter.isAttacking && !fighter.isBlocking && !fighter.isDashing) {
+            fighter.switchSprite(AnimState.IDLE);
+        }
+    }
     _applyAIActions(fighter, actions) {
         const moveSpeed = fighter.characterConfig?.stats?.moveSpeed || 5;
         const jumpVelocity = fighter.characterConfig?.stats?.jumpVelocity || JUMP_VELOCITY;
-        const isAttacking = fighter.currentState === AnimState.ATTACK1 ||
-            fighter.currentState === AnimState.ATTACK2;
+        const isAttacking = fighter.isAttacking;
 
         // Block
         fighter.block(actions.block);
@@ -451,7 +485,7 @@ export class BattleScene {
         // Determine round winner
         let roundWinner = null;
         if (this.player.health === this.enemy.health) {
-            // Draw — no one wins the round
+            // Draw â€” no one wins the round
         } else if (this.player.health > this.enemy.health) {
             roundWinner = 'player';
         } else {
@@ -484,6 +518,9 @@ export class BattleScene {
         this.enemy.reset();
         this.player.facingRight = true;
         this.enemy.facingRight = false;
+        this.player.updateAttackBox();
+        this.enemy.updateAttackBox();
+        this.showTrainingHitboxes = false;
 
         // Reset timer
         this.timer = MATCH_DURATION;
@@ -557,8 +594,7 @@ export class BattleScene {
         const inputHandler = this.game.inputHandler;
         const moveSpeed = fighter.characterConfig?.stats?.moveSpeed || 5;
         const jumpVelocity = fighter.characterConfig?.stats?.jumpVelocity || JUMP_VELOCITY;
-        const isAttacking = fighter.currentState === AnimState.ATTACK1 ||
-            fighter.currentState === AnimState.ATTACK2;
+        const isAttacking = fighter.isAttacking;
 
         // Block
         fighter.block(inputHandler.isPressed('block', playerId));
@@ -602,8 +638,7 @@ export class BattleScene {
 
         // Jump input
         if (inputHandler.isPressed('jump', playerId) &&
-            fighter.currentState !== AnimState.JUMP &&
-            fighter.currentState !== AnimState.FALL &&
+            fighter.isGrounded &&
             !fighter.isBlocking) {
             fighter.velocity.y = jumpVelocity;
         }
@@ -640,7 +675,7 @@ export class BattleScene {
         this.enemy.draw(ctx);
 
         // Training mode: show hitboxes
-        if (this.gameMode === 'training') {
+        if (this.gameMode === 'training' && this.showTrainingHitboxes) {
             this._drawHitboxes(ctx);
         }
 
@@ -686,3 +721,8 @@ export class BattleScene {
         });
     }
 }
+
+
+
+
+

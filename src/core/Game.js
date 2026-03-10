@@ -83,15 +83,16 @@ export class Game {
     const parent = this.canvas.parentElement;
     if (!parent) return;
 
-    const maxWidth = window.innerWidth * 0.95;
-    const maxHeight = window.innerHeight * 0.85;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
     const ratio = CANVAS_WIDTH / CANVAS_HEIGHT;
 
-    let newWidth = maxWidth;
+    // Preenche toda a tela mantendo proporção 16:9
+    let newWidth = vw;
     let newHeight = newWidth / ratio;
 
-    if (newHeight > maxHeight) {
-      newHeight = maxHeight;
+    if (newHeight > vh) {
+      newHeight = vh;
       newWidth = newHeight * ratio;
     }
 
@@ -99,9 +100,9 @@ export class Game {
     this.canvas.style.transformOrigin = 'top left';
     this.canvas.style.transform = `scale(${scale})`;
 
-    // Adjust parent container to match scaled canvas size
+    // Container ocupa a tela toda; canvas escalado vive dentro
     parent.style.width = `${newWidth}px`;
-    parent.style.minHeight = `${newHeight + 60}px`; // +60 for HUD
+    parent.style.height = `${newHeight}px`;
   }
 
   _getCharacterSpritePaths(config) {

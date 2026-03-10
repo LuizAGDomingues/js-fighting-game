@@ -44,13 +44,14 @@ export class CombatSystem {
   }
 
   _isFacingAttacker(defender, attacker) {
-    // Block only works when facing toward the attacker
-    // If standing still, block always works (neutral block)
-    if (defender.velocity.x === 0) return true;
-    // Moving toward attacker = facing attacker
-    const toAttacker = attacker.position.x - defender.position.x;
-    return (toAttacker > 0 && defender.velocity.x >= 0) ||
-      (toAttacker < 0 && defender.velocity.x <= 0);
+    const defenderCenter = defender.position.x + defender.width / 2;
+    const attackerCenter = attacker.position.x + attacker.width / 2;
+
+    if (defender.facingRight) {
+      return attackerCenter >= defenderCenter;
+    }
+
+    return attackerCenter <= defenderCenter;
   }
 
   _applyKnockback(defender, attacker, knockback) {

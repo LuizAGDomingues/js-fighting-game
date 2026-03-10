@@ -1,4 +1,4 @@
-import { DOUBLE_TAP_WINDOW } from '../config/constants.js';
+﻿import { DOUBLE_TAP_WINDOW } from '../config/constants.js';
 
 export class InputHandler {
   constructor() {
@@ -11,17 +11,17 @@ export class InputHandler {
         left: 'a',
         right: 'd',
         jump: 'w',
-        attack1: ' ',
+        attack1: 'space',
         attack2: 'e',
         block: 's'
       },
       enemy: {
-        left: 'ArrowLeft',
-        right: 'ArrowRight',
-        jump: 'ArrowUp',
-        attack1: 'ArrowDown',
-        attack2: 'Enter',
-        block: 'Shift'
+        left: 'arrowleft',
+        right: 'arrowright',
+        jump: 'arrowup',
+        attack1: 'arrowdown',
+        attack2: 'enter',
+        block: 'shift'
       }
     };
 
@@ -33,23 +33,58 @@ export class InputHandler {
 
     this._onKeyDown = this._onKeyDown.bind(this);
     this._onKeyUp = this._onKeyUp.bind(this);
+    this._onBlur = this._onBlur.bind(this);
   }
 
   bind() {
     window.addEventListener('keydown', this._onKeyDown);
     window.addEventListener('keyup', this._onKeyUp);
+    window.addEventListener('blur', this._onBlur);
   }
 
   unbind() {
     window.removeEventListener('keydown', this._onKeyDown);
     window.removeEventListener('keyup', this._onKeyUp);
+    window.removeEventListener('blur', this._onBlur);
+    this._clearInputs();
+  }
+
+
+  _clearInputs() {
+    this.keyStates = {};
+    this.keyJustPressed = {};
+    this.lastKeys = { player: null, enemy: null };
+
+    for (const playerId of ['player', 'enemy']) {
+      this._doubleTap[playerId] = { key: null, timer: 0, triggered: false };
+    }
+  }
+
+  _onBlur() {
+    this._clearInputs();
+  }
+  _normalizeKey(event) {
+    if (event.code === 'Space') return 'space';
+    if (event.key === ' ') return 'space';
+    if (event.key === 'Shift' || event.code === 'ShiftLeft' || event.code === 'ShiftRight') return 'shift';
+    return event.key.toLowerCase();
+  }
+
+  _isBoundKey(key) {
+    return Object.values(this.bindings).some(playerBindings =>
+      Object.values(playerBindings).includes(key)
+    );
   }
 
   _onKeyDown(event) {
-    const key = event.key;
+    const key = this._normalizeKey(event);
 
-    // Track "just pressed" (only on initial press, not repeat)
-    if (!this.keyStates[key]) {
+    if (this._isBoundKey(key)) {
+      event.preventDefault();
+    }
+
+    // Track "just pressed" only on the initial non-repeat press
+    if (!this.keyStates[key] && !event.repeat) {
       this.keyJustPressed[key] = true;
     }
 
@@ -77,7 +112,14 @@ export class InputHandler {
   }
 
   _onKeyUp(event) {
-    this.keyStates[event.key] = false;
+    const key = this._normalizeKey(event);
+
+    if (this._isBoundKey(key)) {
+      event.preventDefault();
+    }
+
+    this.keyStates[key] = false;
+    this.keyJustPressed[key] = false;
   }
 
   update(deltaTime) {
@@ -134,3 +176,6 @@ export class InputHandler {
     return this.lastKeys[playerId];
   }
 }
+
+
+

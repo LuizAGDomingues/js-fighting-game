@@ -1,4 +1,4 @@
-import { Sprite } from './Sprite.js';
+﻿import { Sprite } from './Sprite.js';
 import {
   GRAVITY, CANVAS_WIDTH, CANVAS_HEIGHT,
   FIGHTER_WIDTH, FIGHTER_HEIGHT,
@@ -34,12 +34,17 @@ export class Fighter extends Sprite {
     super({ position, image, scale, framesMax, offset });
 
     this.velocity = velocity;
-    this.width = FIGHTER_WIDTH;
-    this.height = FIGHTER_HEIGHT;
+    this.width = characterConfig?.collisionBox?.width || FIGHTER_WIDTH;
+    this.height = characterConfig?.collisionBox?.height || FIGHTER_HEIGHT;
     this.lastKey = null;
+    this.baseAttackBox = {
+      offset: { ...attackBox.offset },
+      width: attackBox.width,
+      height: attackBox.height
+    };
     this.attackBox = {
       position: { x: this.position.x, y: this.position.y },
-      offset: attackBox.offset,
+      offset: { ...attackBox.offset },
       width: attackBox.width,
       height: attackBox.height
     };
@@ -55,6 +60,7 @@ export class Fighter extends Sprite {
     this.hitRegistered = false;
     this.characterConfig = characterConfig;
     this.weight = characterConfig?.stats?.weight || 1.0;
+    this.spriteFacingRight = characterConfig?.spriteFacingRight ?? true;
 
     // Block state
     this.isBlocking = false;
@@ -75,6 +81,8 @@ export class Fighter extends Sprite {
     // Initial position for reset
     this._initialPosition = { x: position.x, y: position.y };
     this._initialVelocity = { x: velocity.x, y: velocity.y };
+
+    this.updateAttackBox();
   }
 
   draw(ctx) {
@@ -96,8 +104,10 @@ export class Fighter extends Sprite {
     const drawW = frameWidth * this.scale.x;
     const drawH = this.image.height * this.scale.y;
 
+    const shouldFlip = this.facingRight !== this.spriteFacingRight;
+
     ctx.save();
-    if (!this.facingRight) {
+    if (shouldFlip) {
       // Flip horizontally around the fighter's center
       ctx.translate(this.position.x + this.width / 2, 0);
       ctx.scale(-1, 1);
@@ -151,21 +161,6 @@ export class Fighter extends Sprite {
   update(deltaTime) {
     if (!this.dead) this.animateFrames(deltaTime);
 
-    // Update attack box position
-    const atkData = this._getCurrentAttackData();
-    if (atkData) {
-      this.attackBox.offset = { ...atkData.attackBox.offset };
-      this.attackBox.width = atkData.attackBox.width;
-      this.attackBox.height = atkData.attackBox.height;
-    }
-    // Flip attack box when facing left
-    if (this.facingRight) {
-      this.attackBox.position.x = this.position.x + this.attackBox.offset.x;
-    } else {
-      this.attackBox.position.x = this.position.x + this.width - this.attackBox.offset.x - this.attackBox.width;
-    }
-    this.attackBox.position.y = this.position.y + this.attackBox.offset.y;
-
     // Dash logic
     if (this.isDashing) {
       this.dashTimer -= deltaTime;
@@ -193,11 +188,21 @@ export class Fighter extends Sprite {
       this.velocity.y += GRAVITY;
     }
 
+    // Keep fighters on-screen even if a state bug or stacked input spikes vertical velocity.
+    if (this.position.y < 0) {
+      this.position.y = 0;
+      if (this.velocity.y < 0) {
+        this.velocity.y = 0;
+      }
+    }
+
     // Enforce boundaries
     if (this.position.x < 0) this.position.x = 0;
     if (this.position.x > CANVAS_WIDTH - this.width) {
       this.position.x = CANVAS_WIDTH - this.width;
     }
+
+    this.updateAttackBox();
   }
 
   get isGrounded() {
@@ -225,6 +230,28 @@ export class Fighter extends Sprite {
     if (this.currentState === AnimState.ATTACK1) return this.characterConfig.attacks.attack1;
     if (this.currentState === AnimState.ATTACK2) return this.characterConfig.attacks.attack2;
     return null;
+  }
+
+  updateAttackBox() {
+    const attackConfig = this._getCurrentAttackData()?.attackBox || this.baseAttackBox;
+
+    // A box começa perto do corpo (cobre corpo a corpo) e se estende
+    // até offset.x + width (alcance máximo preservado).
+    const NEAR_OFFSET = 10;
+    const startOffset = Math.min(NEAR_OFFSET, attackConfig.offset.x);
+    const effectiveWidth = attackConfig.offset.x + attackConfig.width - startOffset;
+
+    this.attackBox.offset = { ...attackConfig.offset };
+    this.attackBox.width = effectiveWidth;
+    this.attackBox.height = attackConfig.height;
+
+    if (this.facingRight) {
+      this.attackBox.position.x = this.position.x + startOffset;
+    } else {
+      this.attackBox.position.x =
+        this.position.x + this.width - startOffset - effectiveWidth;
+    }
+    this.attackBox.position.y = this.position.y + this.attackBox.offset.y;
   }
 
   attack(type = 'attack1') {
@@ -338,5 +365,8 @@ export class Fighter extends Sprite {
     this.currentAttack = null;
     this.currentState = '';
     this.switchSprite(AnimState.IDLE);
+    this.updateAttackBox();
   }
 }
+
+

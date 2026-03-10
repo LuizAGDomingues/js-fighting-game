@@ -27,6 +27,7 @@ export class MainMenuScene {
         // Setup buttons
         this.buttons = Array.from(this.overlay.querySelectorAll('.menu-btn'));
         this.selectedIndex = 0;
+        this.overlay.scrollTop = 0;
         this._updateSelection();
 
         // Button click handlers
@@ -146,6 +147,9 @@ export class MainMenuScene {
         this.buttons.forEach((btn, i) => {
             btn.classList.toggle('selected', i === this.selectedIndex);
         });
+
+        const activeButton = this.buttons[this.selectedIndex];
+        activeButton?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
 
     _confirm() {

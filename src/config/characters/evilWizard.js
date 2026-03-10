@@ -3,7 +3,7 @@ export const evilWizard = {
     name: 'Evil Wizard',
     spriteBasePath: './Characters/EVil Wizard 2/Sprites',
     scale: { x: 2.5, y: 2.5 },
-    offset: { x: 215, y: 155 },
+    offset: { x: 315, y: 268 },
     stats: {
         health: 90,
         moveSpeed: 4.5,

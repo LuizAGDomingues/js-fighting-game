@@ -3,7 +3,7 @@ export const huntress = {
     name: 'Huntress',
     spriteBasePath: './Characters/Huntress/Sprites',
     scale: { x: 2.5, y: 2.5 },
-    offset: { x: 215, y: 155 },
+    offset: { x: 168, y: 92 },
     stats: {
         health: 85,
         moveSpeed: 6,

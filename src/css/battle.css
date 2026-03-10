@@ -3,20 +3,22 @@
   font-family: 'Press Start 2P', sans-serif;
 }
 
-body {
-  width: 100%;
-  min-height: 100vh;
+html, body {
   margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  background-color: rgba(0, 0, 0, 0.8);
 }
 
 .content {
   position: relative;
-  display: inline-block;
+  /* tamanho controlado dinamicamente pelo _handleResize */
+  overflow: hidden;
 }
 
 .life-bars {
