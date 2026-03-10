@@ -21,6 +21,14 @@ const PARTICLE_PRESETS = {
         gravity: 100,
         spread: Math.PI * 0.8
     },
+    shieldHit: {
+        colors: ['#ff2200', '#ff5500', '#ff8800', '#ffbb00', '#ffffff'],
+        speedMin: 80, speedMax: 220,
+        sizeMin: 2, sizeMax: 5,
+        lifetimeMin: 0.15, lifetimeMax: 0.4,
+        gravity: 150,
+        spread: Math.PI * 1.2
+    },
     dust: {
         colors: ['#8B7355', '#A0926B', '#C4B899', '#7A6A53'],
         speedMin: 20, speedMax: 60,

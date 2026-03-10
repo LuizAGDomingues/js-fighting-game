@@ -36,5 +36,6 @@ export const evilWizard = {
         takeHit: { src: 'Take hit.png', framesMax: 3 },
         death: { src: 'Death.png', framesMax: 7 }
     },
-    collisionBox: { width: 50, height: 150 }
+    collisionBox: { width: 50, height: 150 },
+    shieldBox: { x: -10, y: 0, width: 70, height: 150 }
 };

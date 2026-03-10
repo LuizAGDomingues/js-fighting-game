@@ -28,14 +28,15 @@ export const kenji = {
     }
   },
   sprites: {
-    idle:    { src: 'Idle.png', framesMax: 4 },
-    run:     { src: 'Run.png', framesMax: 8 },
-    jump:    { src: 'Jump.png', framesMax: 2 },
-    fall:    { src: 'Fall.png', framesMax: 2 },
+    idle: { src: 'Idle.png', framesMax: 4 },
+    run: { src: 'Run.png', framesMax: 8 },
+    jump: { src: 'Jump.png', framesMax: 2 },
+    fall: { src: 'Fall.png', framesMax: 2 },
     attack1: { src: 'Attack1.png', framesMax: 4 },
     attack2: { src: 'Attack2.png', framesMax: 4 },
     takeHit: { src: 'Take hit.png', framesMax: 3 },
-    death:   { src: 'Death.png', framesMax: 7 }
+    death: { src: 'Death.png', framesMax: 7 }
   },
-  collisionBox: { width: 50, height: 150 }
+  collisionBox: { width: 50, height: 150 },
+  shieldBox: { x: -10, y: 0, width: 70, height: 150 }
 };

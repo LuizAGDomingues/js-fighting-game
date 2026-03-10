@@ -306,8 +306,9 @@ export class BattleScene {
                 const hitY = enemy.position.y + enemy.height / 2;
 
                 if (result.type === 'blocked') {
-                    this.screenShake.trigger(2, 0.1);
-                    this.particles.emit('block', hitX, hitY, 8);
+                    this.screenShake.trigger(3, 0.15);
+                    enemy.triggerShieldHit();
+                    this.particles.emit('shieldHit', hitX, hitY, 12);
                     this.damageNumbers.spawn(hitX, hitY - 20, result.damage, 'blocked');
                 } else {
                     const combo = combatSystem.getComboCount?.('player') || 0;
@@ -342,8 +343,9 @@ export class BattleScene {
                 const hitY = player.position.y + player.height / 2;
 
                 if (result.type === 'blocked') {
-                    this.screenShake.trigger(2, 0.1);
-                    this.particles.emit('block', hitX, hitY, 8);
+                    this.screenShake.trigger(3, 0.15);
+                    player.triggerShieldHit();
+                    this.particles.emit('shieldHit', hitX, hitY, 12);
                     this.damageNumbers.spawn(hitX, hitY - 20, result.damage, 'blocked');
                 } else {
                     const combo = combatSystem.getComboCount?.('enemy') || 0;

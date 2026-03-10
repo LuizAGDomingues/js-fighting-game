@@ -1,4 +1,5 @@
 ﻿import { Sprite } from './Sprite.js';
+import { EnergyShield } from '../effects/EnergyShield.js';
 import {
   GRAVITY, CANVAS_WIDTH, CANVAS_HEIGHT,
   FIGHTER_WIDTH, FIGHTER_HEIGHT,
@@ -64,6 +65,7 @@ export class Fighter extends Sprite {
 
     // Block state
     this.isBlocking = false;
+    this.shieldHitTimer = 0;
 
     // Dash state
     this.isDashing = false;
@@ -93,11 +95,6 @@ export class Fighter extends Sprite {
       ctx.globalAlpha = 0.4;
     }
 
-    // Block visual: slight tint
-    if (this.isBlocking) {
-      ctx.globalAlpha = 0.7;
-    }
-
     const frameWidth = this.image.width / this.framesMax;
     const drawX = this.position.x - this.offset.x;
     const drawY = this.position.y - this.offset.y;
@@ -108,11 +105,12 @@ export class Fighter extends Sprite {
 
     ctx.save();
     if (shouldFlip) {
-      // Flip horizontally around the fighter's center
       ctx.translate(this.position.x + this.width / 2, 0);
       ctx.scale(-1, 1);
       ctx.translate(-(this.position.x + this.width / 2), 0);
     }
+    // Slight tint while blocking
+    if (this.isBlocking) ctx.globalAlpha *= 0.8;
 
     ctx.drawImage(
       this.image,
@@ -127,19 +125,13 @@ export class Fighter extends Sprite {
     );
     ctx.restore();
 
-    // Draw block shield indicator
-    if (this.isBlocking) {
-      ctx.globalAlpha = 0.3;
-      ctx.fillStyle = '#4488ff';
-      ctx.fillRect(
-        this.position.x - 5,
-        this.position.y,
-        this.width + 10,
-        this.height
-      );
-    }
-
+    // Restore alpha before drawing the shield
     ctx.globalAlpha = 1.0;
+
+    // Energy shield (drawn on top, always with clean alpha)
+    if (this.isBlocking) {
+      EnergyShield.draw(ctx, this);
+    }
   }
 
   animateFrames(deltaTime) {
@@ -175,6 +167,7 @@ export class Fighter extends Sprite {
     if (this.dashCooldownTimer > 0) this.dashCooldownTimer -= deltaTime;
     if (this.iFrameTimer > 0) this.iFrameTimer -= deltaTime;
     if (this.attackCooldownTimer > 0) this.attackCooldownTimer -= deltaTime;
+    if (this.shieldHitTimer > 0) this.shieldHitTimer -= deltaTime;
 
     // Apply velocity
     this.position.x += this.velocity.x;
@@ -289,6 +282,10 @@ export class Fighter extends Sprite {
     } else {
       this.isBlocking = false;
     }
+  }
+
+  triggerShieldHit() {
+    this.shieldHitTimer = 0.25;
   }
 
   dash(direction) {
