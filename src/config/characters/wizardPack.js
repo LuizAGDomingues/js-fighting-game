@@ -1,26 +1,26 @@
 export const wizardPack = {
     id: 'wizardPack',
-    name: 'Wizard',
+    name: 'Theron',
     spriteBasePath: './images/wizardPack',
     scale: { x: 1.8, y: 1.8 },
     offset: { x: 173, y: 102 },
     spriteFacingRight: true,
     stats: {
-        health: 90,
-        moveSpeed: 4.2,
+        health: 94,
+        moveSpeed: 4.4,
         jumpVelocity: -19,
         weight: 0.85
     },
     attacks: {
         attack1: {
-            damage: 22,
+            damage: 19,
             knockback: { x: 4, y: -3 },
             hitFrames: { start: 3, end: 5 },
             attackBox: { offset: { x: 80, y: 40 }, width: 130, height: 70 },
             cooldown: 0
         },
         attack2: {
-            damage: 32,
+            damage: 28,
             knockback: { x: 6, y: -4 },
             hitFrames: { start: 3, end: 6 },
             attackBox: { offset: { x: 90, y: 20 }, width: 150, height: 80 },
@@ -37,6 +37,6 @@ export const wizardPack = {
         takeHit: { src: 'Hit.png',     framesMax: 4 },
         death:   { src: 'Death.png',   framesMax: 7 }
     },
-    collisionBox: { width: 50, height: 150 },
-    shieldBox: { x: -22, y: -12, width: 96, height: 168 }
+    collisionBox: { width: 50, height: 150 }
 };
+

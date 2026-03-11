@@ -1,25 +1,25 @@
 export const evilWizard = {
     id: 'evilWizard',
-    name: 'Evil Wizard',
+    name: 'Malachar',
     spriteBasePath: './Characters/EVil Wizard 2/Sprites',
     scale: { x: 2.5, y: 2.5 },
     offset: { x: 315, y: 268 },
     stats: {
-        health: 90,
-        moveSpeed: 4.5,
+        health: 92,
+        moveSpeed: 4.4,
         jumpVelocity: -19,
         weight: 0.85
     },
     attacks: {
         attack1: {
-            damage: 22,
+            damage: 19,
             knockback: { x: 4, y: -3 },
             hitFrames: { start: 3, end: 5 },
             attackBox: { offset: { x: 100, y: 40 }, width: 150, height: 60 },
             cooldown: 0
         },
         attack2: {
-            damage: 32,
+            damage: 27,
             knockback: { x: 6, y: -4 },
             hitFrames: { start: 3, end: 5 },
             attackBox: { offset: { x: 90, y: 20 }, width: 170, height: 70 },
@@ -36,6 +36,6 @@ export const evilWizard = {
         takeHit: { src: 'Take hit.png', framesMax: 3 },
         death: { src: 'Death.png', framesMax: 7 }
     },
-    collisionBox: { width: 50, height: 150 },
-    shieldBox: { x: -18, y: -10, width: 86, height: 168 }
+    collisionBox: { width: 50, height: 150 }
 };
+

@@ -162,8 +162,4 @@ export class InputHandler {
     }
     return 0;
   }
-
-  getLastDirection(playerId) {
-    return this.lastKeys[playerId];
-  }
 }

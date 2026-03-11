@@ -42,6 +42,7 @@
         <div class="menu-badges">
           <span class="menu-badge">2P LOCAL</span>
           <span class="menu-badge">ARCADE</span>
+          <span class="menu-badge">TORRE</span>
           <span class="menu-badge">TREINO</span>
         </div>
       </section>
@@ -51,6 +52,7 @@
         <div class="menu-buttons">
           <button class="menu-btn selected" data-action="versus">VERSUS (2P)</button>
           <button class="menu-btn" data-action="arcade">ARCADE (vs CPU)</button>
+          <button class="menu-btn" data-action="tower">TORRE</button>
           <button class="menu-btn" data-action="training">TREINO</button>
           <button class="menu-btn" data-action="settings">CONFIGURACOES</button>
           <button class="menu-btn" data-action="howtoplay">COMO JOGAR</button>
@@ -185,18 +187,24 @@
   <!-- ===== GAME CANVAS + HUD ===== -->
   <div class="content hud-hidden">
     <div class="life-bars">
-      <!-- player health -->
-      <div class="playerHealth-content">
-        <div class="playerHealth-aux"></div>
-        <div id="playerHealth" class="playerHealth-bar"></div>
+      <!-- P1 block -->
+      <div class="hud-fighter-block p1-block">
+        <div class="health-bar-outer">
+          <div class="health-bg"></div>
+          <div id="playerHealth" class="health-fill p1-fill"></div>
+          <span id="p1-name" class="fighter-name p1-name-label">P1</span>
+        </div>
         <div id="p1-rounds" class="round-indicators"></div>
       </div>
-      <!-- timer -->
+      <!-- Timer -->
       <div id="timer" class="timer">90</div>
-      <!-- enemy health -->
-      <div class="enemyHealth-content">
-        <div class="enemyHealth-aux"></div>
-        <div id="enemyHealth" class="enemyHealth-bar"></div>
+      <!-- P2 block -->
+      <div class="hud-fighter-block p2-block">
+        <div class="health-bar-outer">
+          <div class="health-bg"></div>
+          <div id="enemyHealth" class="health-fill p2-fill"></div>
+          <span id="p2-name" class="fighter-name p2-name-label">P2</span>
+        </div>
         <div id="p2-rounds" class="round-indicators"></div>
       </div>
     </div>

@@ -1,12 +1,12 @@
 export const huntress2 = {
     id: 'huntress2',
-    name: 'Huntress II',
+    name: 'Kaela',
     spriteBasePath: './images/huntress2',
     scale: { x: 2.5, y: 2.5 },
     offset: { x: 100, y: 15 },
     stats: {
-        health: 85,
-        moveSpeed: 5.5,
+        health: 86,
+        moveSpeed: 5.6,
         jumpVelocity: -21,
         weight: 0.8
     },
@@ -39,14 +39,14 @@ export const huntress2 = {
     projectile: {
         moveSprite:    { src: 'Arrow/Move.png',   framesMax: 2 },
         explodeSprite: { src: 'Arrow/Static.png', framesMax: 1 },
-        speed: 10,
-        damage: 18,
+        speed: 8.5,
+        damage: 16,
         knockback: { x: 4, y: -1 },
         spawnFrame: 3,
-        spawnOffset: { x: 90, y: 54 },
+        spawnOffset: { x: 120, y: 69 },
         scale: { x: 3.0, y: 3.0 },
         collisionBox: { width: 20, height: 8 }
     },
-    collisionBox: { width: 50, height: 150 },
-    shieldBox: { x: -22, y: -6, width: 96, height: 145 }
+    collisionBox: { width: 50, height: 150 }
 };
+

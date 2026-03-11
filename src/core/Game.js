@@ -1,6 +1,5 @@
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '../config/constants.js';
 import { CHARACTER_ROSTER } from '../config/characters/index.js';
-import { EnergyShield } from '../effects/EnergyShield.js';
 import { AssetLoader } from './AssetLoader.js';
 import { GameLoop } from './GameLoop.js';
 import { InputHandler } from '../systems/InputHandler.js';
@@ -51,12 +50,6 @@ export class Game {
       this.ui.updateLoading(progress);
     });
 
-    // Wire up the energy shield assets
-    EnergyShield.setImages(
-      this.assetLoader.get('./images/shield/normal.png'),
-      this.assetLoader.get('./images/shield/attacked.png')
-    );
-
     // Initialize audio on first user interaction (browser autoplay policy)
     const initAudio = () => {
       if (!this._audioInitialized) {
@@ -94,7 +87,7 @@ export class Game {
     const vh = window.innerHeight;
     const ratio = CANVAS_WIDTH / CANVAS_HEIGHT;
 
-    // Preenche toda a tela mantendo proporção 16:9
+    // Preenche toda a tela mantendo proporcao 16:9
     let newWidth = vw;
     let newHeight = newWidth / ratio;
 
@@ -117,7 +110,10 @@ export class Game {
     const seen = new Set();
     for (const key of Object.keys(config.sprites)) {
       const p = `${config.spriteBasePath}/${config.sprites[key].src}`;
-      if (!seen.has(p)) { seen.add(p); paths.push(p); }
+      if (!seen.has(p)) {
+        seen.add(p);
+        paths.push(p);
+      }
     }
     if (config.projectile) {
       paths.push(`${config.spriteBasePath}/${config.projectile.moveSprite.src}`);
@@ -129,9 +125,7 @@ export class Game {
   _getAllSpritePaths() {
     const paths = [
       './images/background.png',
-      './images/shop.png',
-      './images/shield/normal.png',
-      './images/shield/attacked.png'
+      './images/shop.png'
     ];
     for (const char of CHARACTER_ROSTER) {
       paths.push(...this._getCharacterSpritePaths(char));
@@ -148,6 +142,3 @@ export class Game {
     this.sceneManager.render(this.ctx);
   }
 }
-
-
-

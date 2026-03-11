@@ -1,6 +1,12 @@
 import { CHARACTER_ROSTER } from '../config/characters/index.js';
 import { AIController } from '../ai/AIController.js';
 import { FRAME_HOLD_SECONDS } from '../config/constants.js';
+import {
+    createTowerAIController,
+    createTowerState,
+    getTowerOpponentConfig,
+    getTowerPreviewOpponentIndex
+} from '../systems/TowerManager.js';
 
 /**
  * CharacterSelectScene — Seleção de personagens para P1 e P2
@@ -30,6 +36,7 @@ export class CharacterSelectScene {
 
     enter(data = {}) {
         this.gameMode = data.gameMode || 'versus';
+        this.aiDifficulty = data.aiDifficulty || this.aiDifficulty || 'medium';
         this.overlay.classList.add('active');
         document.querySelector('.content').classList.add('hud-hidden');
 
@@ -38,6 +45,7 @@ export class CharacterSelectScene {
         this.selections.enemy = { index: Math.min(1, CHARACTER_ROSTER.length - 1), confirmed: false };
         this.countdown = null;
         this.countdownTimer = 0;
+        this._syncCpuSelection();
 
         // Build character grids
         this._buildGrids();
@@ -54,7 +62,7 @@ export class CharacterSelectScene {
         // Show/hide difficulty selector
         const diffSelector = this.overlay.querySelector('.cs-difficulty');
         if (diffSelector) {
-            diffSelector.style.display = this.gameMode === 'arcade' ? 'flex' : 'none';
+            diffSelector.style.display = ['arcade', 'tower'].includes(this.gameMode) ? 'flex' : 'none';
             // Set active difficulty button
             diffSelector.querySelectorAll('.diff-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.difficulty === this.aiDifficulty);
@@ -74,6 +82,8 @@ export class CharacterSelectScene {
             if (p2Label) {
                 if (this.gameMode === 'arcade') {
                     p2Label.textContent = 'CPU';
+                } else if (this.gameMode === 'tower') {
+                    p2Label.textContent = 'TORRE';
                 } else if (this.gameMode === 'training') {
                     p2Label.textContent = 'DUMMY';
                 } else {
@@ -94,8 +104,15 @@ export class CharacterSelectScene {
     _updateModeLabel() {
         const label = this.overlay.querySelector('.cs-mode-label');
         if (!label) return;
-        const modeNames = { versus: 'VERSUS', arcade: 'ARCADE', training: 'TREINO' };
+        const modeNames = { versus: 'VERSUS', arcade: 'ARCADE', tower: 'TORRE', training: 'TREINO' };
         label.textContent = modeNames[this.gameMode] || 'VERSUS';
+    }
+
+    _syncCpuSelection() {
+        if (this.gameMode !== 'tower') return;
+
+        this.selections.enemy.index = getTowerPreviewOpponentIndex(this.selections.player.index);
+        this.selections.enemy.confirmed = this.selections.player.confirmed;
     }
 
     _buildGrids() {
@@ -144,8 +161,13 @@ export class CharacterSelectScene {
                 card.appendChild(nameEl);
 
                 card.onclick = () => {
+                    if (playerId === 'enemy' && this.gameMode !== 'versus') {
+                        return;
+                    }
+
                     if (!this.selections[playerId].confirmed) {
                         this.selections[playerId].index = i;
+                        this._syncCpuSelection();
                         this._updateSelectionUI();
                     }
                 };
@@ -211,6 +233,7 @@ export class CharacterSelectScene {
 
     _updateSelectionUI() {
         const roster = CHARACTER_ROSTER;
+        this._syncCpuSelection();
 
         ['player', 'enemy'].forEach(playerId => {
             const panelClass = playerId === 'player' ? 'p1' : 'p2';
@@ -227,10 +250,11 @@ export class CharacterSelectScene {
             // Update stats
             const statsEl = panel.querySelector('.cs-stats');
             if (statsEl && char) {
-                statsEl.innerHTML =
-                    `${char.name}<br>` +
-                    `HP: ${char.stats.health} | SPD: ${char.stats.moveSpeed}<br>` +
-                    `ATK1: ${char.attacks.attack1.damage} | ATK2: ${char.attacks.attack2.damage}`;
+                statsEl.replaceChildren(
+                    this._createStatsLine(char.name),
+                    this._createStatsLine(`HP: ${char.stats.health} | SPD: ${char.stats.moveSpeed}`),
+                    this._createStatsLine(`ATK1: ${char.attacks.attack1.damage} | ATK2: ${char.attacks.attack2.damage}`)
+                );
             }
 
             // Ready indicator
@@ -262,14 +286,26 @@ export class CharacterSelectScene {
                     this._updateSelectionUI();
                     this.game.audio.playSFX('menuSelect');
                     // In arcade/training, auto-confirm enemy with random selection
-                    if (this.gameMode === 'arcade' || this.gameMode === 'training') {
+                    if (this.gameMode === 'arcade' || this.gameMode === 'training' || this.gameMode === 'tower') {
                         if (!this.selections.enemy.confirmed) {
-                            // Random enemy selection (different from player if possible)
-                            let enemyIdx = Math.floor(Math.random() * roster.length);
-                            if (roster.length > 1 && enemyIdx === this.selections.player.index) {
-                                enemyIdx = (enemyIdx + 1) % roster.length;
+                            if (this.gameMode === 'tower') {
+                                const towerState = createTowerState(
+                                    roster[this.selections.player.index].id,
+                                    this.aiDifficulty
+                                );
+                                const enemyConfig = getTowerOpponentConfig(towerState);
+                                const enemyIdx = roster.findIndex(char => char.id === enemyConfig?.id);
+                                if (enemyIdx >= 0) {
+                                    this.selections.enemy.index = enemyIdx;
+                                }
+                            } else {
+                                // Random enemy selection (different from player if possible)
+                                let enemyIdx = Math.floor(Math.random() * roster.length);
+                                if (roster.length > 1 && enemyIdx === this.selections.player.index) {
+                                    enemyIdx = (enemyIdx + 1) % roster.length;
+                                }
+                                this.selections.enemy.index = enemyIdx;
                             }
-                            this.selections.enemy.index = enemyIdx;
                             this.selections.enemy.confirmed = true;
                             this._updateSelectionUI();
                         }
@@ -280,7 +316,7 @@ export class CharacterSelectScene {
         } else if (e.key === 's' || e.key === 'S') {
             this.selections.player.confirmed = false;
             // In arcade/training, also unconfirm enemy
-            if (this.gameMode === 'arcade' || this.gameMode === 'training') {
+            if (this.gameMode === 'arcade' || this.gameMode === 'training' || this.gameMode === 'tower') {
                 this.selections.enemy.confirmed = false;
             }
             this._updateSelectionUI();
@@ -335,6 +371,12 @@ export class CharacterSelectScene {
         }
     }
 
+    _createStatsLine(text) {
+        const line = document.createElement('div');
+        line.textContent = text;
+        return line;
+    }
+
     update(deltaTime) {
         this._updateIdleThumbnails(deltaTime);
 
@@ -356,17 +398,28 @@ export class CharacterSelectScene {
                     // GO!
                     const roster = CHARACTER_ROSTER;
                     const playerConfig = roster[this.selections.player.index];
-                    const enemyConfig = roster[this.selections.enemy.index];
 
-                    const battleData = {
-                        playerConfig,
-                        enemyConfig,
-                        gameMode: this.gameMode
-                    };
+                    let battleData;
 
-                    // Create AI controller for arcade mode
-                    if (this.gameMode === 'arcade') {
-                        battleData.aiController = new AIController(this.aiDifficulty);
+                    if (this.gameMode === 'tower') {
+                        const towerState = createTowerState(playerConfig.id, this.aiDifficulty);
+                        battleData = {
+                            playerConfig,
+                            enemyConfig: getTowerOpponentConfig(towerState),
+                            gameMode: this.gameMode,
+                            towerState,
+                            aiController: createTowerAIController(towerState)
+                        };
+                    } else {
+                        battleData = {
+                            playerConfig,
+                            enemyConfig: roster[this.selections.enemy.index],
+                            gameMode: this.gameMode
+                        };
+
+                        if (this.gameMode === 'arcade') {
+                            battleData.aiController = new AIController(this.aiDifficulty);
+                        }
                     }
 
                     this.sceneManager.switchTo('battle', battleData);

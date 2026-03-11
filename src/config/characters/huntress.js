@@ -1,25 +1,25 @@
 export const huntress = {
     id: 'huntress',
-    name: 'Huntress',
+    name: 'Sylvara',
     spriteBasePath: './Characters/Huntress/Sprites',
     scale: { x: 2.5, y: 2.5 },
     offset: { x: 168, y: 92 },
     stats: {
-        health: 85,
-        moveSpeed: 6,
+        health: 88,
+        moveSpeed: 5.9,
         jumpVelocity: -21,
         weight: 0.8
     },
     attacks: {
         attack1: {
-            damage: 16,
+            damage: 15,
             knockback: { x: 2, y: -2 },
             hitFrames: { start: 2, end: 3 },
             attackBox: { offset: { x: 80, y: 50 }, width: 130, height: 50 },
             cooldown: 0
         },
         attack2: {
-            damage: 25,
+            damage: 22,
             knockback: { x: 4, y: -3 },
             hitFrames: { start: 2, end: 3 },
             attackBox: { offset: { x: 70, y: 30 }, width: 150, height: 60 },

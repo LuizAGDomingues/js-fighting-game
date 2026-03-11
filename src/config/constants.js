@@ -13,7 +13,6 @@ export const MOVE_SPEED = 5;
 export const BASE_DAMAGE = 20;
 export const MAX_HEALTH = 100;
 export const MATCH_DURATION = 90;
-export const BLOCK_DAMAGE_MULTIPLIER = 0.25;
 export const COMBO_WINDOW = 1.5;
 export const COMBO_DAMAGE_SCALING = 0.1;
 export const COMBO_DAMAGE_CAP = 2.0;
@@ -32,3 +31,4 @@ export const FIGHTER_HEIGHT = 150;
 // ===== Animation =====
 export const DEFAULT_FRAME_HOLD = 5;
 export const FRAME_HOLD_SECONDS = DEFAULT_FRAME_HOLD / 60;
+

@@ -12,14 +12,14 @@ export const samuraiMack = {
   },
   attacks: {
     attack1: {
-      damage: 20,
+      damage: 18,
       knockback: { x: 3, y: -2 },
       hitFrames: { start: 3, end: 5 },
       attackBox: { offset: { x: 100, y: 50 }, width: 140, height: 50 },
       cooldown: 0
     },
     attack2: {
-      damage: 30,
+      damage: 26,
       knockback: { x: 5, y: -4 },
       hitFrames: { start: 2, end: 4 },
       attackBox: { offset: { x: 80, y: 30 }, width: 160, height: 60 },

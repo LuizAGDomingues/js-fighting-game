@@ -162,12 +162,11 @@ export class MainMenuScene {
             case 'arcade':
                 this.sceneManager.switchTo('characterSelect', { gameMode: 'arcade' });
                 break;
+            case 'tower':
+                this.sceneManager.switchTo('characterSelect', { gameMode: 'tower' });
+                break;
             case 'training':
                 this.sceneManager.switchTo('characterSelect', { gameMode: 'training' });
-                break;
-            case 'play':
-                // Legacy fallback
-                this.sceneManager.switchTo('characterSelect', { gameMode: 'versus' });
                 break;
             case 'settings':
                 if (this.settingsModal) this.settingsModal.classList.add('active');

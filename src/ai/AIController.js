@@ -1,16 +1,15 @@
 import { CANVAS_WIDTH } from '../config/constants.js';
 
 /**
- * AIController — State-machine based AI for single player mode
+ * AIController - State-machine based AI for single player mode
  *
- * States: idle, approach, attack, retreat, block
+ * States: idle, approach, attack, retreat
  * Difficulties: easy (500ms reaction), medium (300ms), hard (150ms)
  */
 
 const DIFFICULTY_SETTINGS = {
     easy: {
         reactionTime: 0.5,
-        blockChance: 0.25,
         attackChance: 0.4,
         jumpChance: 0.1,
         dashChance: 0.05,
@@ -20,7 +19,6 @@ const DIFFICULTY_SETTINGS = {
     },
     medium: {
         reactionTime: 0.3,
-        blockChance: 0.5,
         attackChance: 0.6,
         jumpChance: 0.15,
         dashChance: 0.12,
@@ -30,7 +28,6 @@ const DIFFICULTY_SETTINGS = {
     },
     hard: {
         reactionTime: 0.15,
-        blockChance: 0.75,
         attackChance: 0.8,
         jumpChance: 0.2,
         dashChance: 0.2,
@@ -40,22 +37,34 @@ const DIFFICULTY_SETTINGS = {
     }
 };
 
-export class AIController {
-    constructor(difficulty = 'medium') {
-        this.difficulty = difficulty;
-        this.settings = DIFFICULTY_SETTINGS[difficulty] || DIFFICULTY_SETTINGS.medium;
+function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+}
 
-        // State machine
+function buildSettings(difficulty, towerProgress = 0) {
+    const base = DIFFICULTY_SETTINGS[difficulty] || DIFFICULTY_SETTINGS.medium;
+    const progress = clamp(towerProgress, 0, 1);
+
+    return {
+        reactionTime: Math.max(0.08, base.reactionTime * (1 - 0.45 * progress)),
+        attackChance: clamp(base.attackChance + 0.18 * progress, 0, 0.95),
+        jumpChance: clamp(base.jumpChance + 0.08 * progress, 0, 0.35),
+        dashChance: clamp(base.dashChance + 0.14 * progress, 0, 0.35),
+        retreatHPThreshold: clamp(base.retreatHPThreshold + 0.08 * progress, 0, 0.5),
+        comboMaxLength: Math.min(4, base.comboMaxLength + Math.round(progress * 1.5)),
+        preferredRange: Math.max(70, base.preferredRange - 25 * progress)
+    };
+}
+
+export class AIController {
+    constructor(difficulty = 'medium', options = {}) {
+        this.difficulty = difficulty;
+        this.towerProgress = clamp(options.towerProgress ?? 0, 0, 1);
+        this.settings = buildSettings(difficulty, this.towerProgress);
+
         this.state = 'idle';
         this.stateTimer = 0;
         this.actionCooldown = 0;
-
-        // Decision timers
-        this.decisionTimer = 0;
-        this.decisionInterval = this.settings.reactionTime;
-
-        // Internal state for smooth actions
-        this._currentActions = this._emptyActions();
         this._comboCount = 0;
     }
 
@@ -66,46 +75,30 @@ export class AIController {
             jump: false,
             attack1: false,
             attack2: false,
-            block: false,
             dash: false,
             dashDirection: 0
         };
     }
 
-    /**
-     * Called each frame by BattleScene
-     * @param {Fighter} self - The AI-controlled fighter
-     * @param {Fighter} opponent - The opponent fighter
-     * @param {number} deltaTime - Time elapsed since last frame in seconds
-     * @returns {Object} actions object
-     */
     decide(self, opponent, deltaTime = 1 / 60) {
-        // Calculate distances and positioning
         const dx = opponent.position.x - self.position.x;
         const distance = Math.abs(dx);
         const direction = dx > 0 ? 1 : -1;
         const hpRatio = self.health / self.maxHealth;
-        const oppHpRatio = opponent.health / opponent.maxHealth;
-        const opponentAttacking = opponent.isAttacking;
         const inRange = distance < this.settings.preferredRange + 40;
-        const tooClose = distance < 40;
         const atEdge = self.position.x < 50 || self.position.x > CANVAS_WIDTH - 100;
 
-        // Update state machine
         this.stateTimer += deltaTime;
         if (this.actionCooldown > 0) this.actionCooldown -= deltaTime;
 
-        // State transitions
-        this._updateState(distance, hpRatio, oppHpRatio, opponentAttacking, inRange, tooClose, atEdge, direction);
+        this._updateState(hpRatio, inRange, atEdge);
 
-        // Generate actions based on state
         const actions = this._emptyActions();
 
         switch (this.state) {
             case 'approach':
                 actions.left = direction < 0;
                 actions.right = direction > 0;
-                // Random jump while approaching
                 if (Math.random() < this.settings.jumpChance * deltaTime && self.isGrounded) {
                     actions.jump = true;
                 }
@@ -113,7 +106,6 @@ export class AIController {
 
             case 'attack':
                 if (this.actionCooldown <= 0) {
-                    // Choose attack type
                     if (this._comboCount < this.settings.comboMaxLength) {
                         if (Math.random() < 0.6) {
                             actions.attack1 = true;
@@ -123,38 +115,23 @@ export class AIController {
                         this._comboCount++;
                         this.actionCooldown = this.settings.reactionTime * 0.6;
                     } else {
-                        // End combo, short pause
                         this._comboCount = 0;
                         this.actionCooldown = this.settings.reactionTime;
                     }
                 }
-                // Slight tracking during attack
                 if (!inRange) {
                     actions.left = direction < 0;
                     actions.right = direction > 0;
                 }
                 break;
 
-            case 'block':
-                actions.block = true;
-                // Counter-attack after blocking
-                if (!opponentAttacking && this.stateTimer > this.settings.reactionTime) {
-                    this.state = 'attack';
-                    this.stateTimer = 0;
-                    this._comboCount = 0;
-                }
-                break;
-
             case 'retreat':
-                // Move away from opponent
                 actions.left = direction > 0;
                 actions.right = direction < 0;
-                // Dash away occasionally
                 if (Math.random() < this.settings.dashChance * deltaTime && !self.isDashing) {
                     actions.dash = true;
                     actions.dashDirection = -direction;
                 }
-                // Jump away
                 if (Math.random() < this.settings.jumpChance * deltaTime && self.isGrounded) {
                     actions.jump = true;
                 }
@@ -162,22 +139,16 @@ export class AIController {
 
             case 'idle':
             default:
-                // Idle — do nothing for a brief moment
                 if (this.stateTimer > this.settings.reactionTime * 1.5) {
                     this.state = 'approach';
                     this.stateTimer = 0;
                 }
                 break;
         }
-
-        this._currentActions = actions;
         return actions;
     }
 
-    _updateState(distance, hpRatio, oppHpRatio, opponentAttacking, inRange, tooClose, atEdge, direction) {
-        // Priority-based state transitions
-
-        // 1. Retreat if low HP
+    _updateState(hpRatio, inRange, atEdge) {
         if (hpRatio < this.settings.retreatHPThreshold && this.state !== 'retreat') {
             if (Math.random() < 0.02) {
                 this.state = 'retreat';
@@ -186,15 +157,7 @@ export class AIController {
             }
         }
 
-        // 2. Block if opponent is attacking and we're in range
-        if (opponentAttacking && inRange && Math.random() < this.settings.blockChance * 0.05) {
-            this.state = 'block';
-            this.stateTimer = 0;
-            return;
-        }
-
-        // 3. Attack if in range
-        if (inRange && this.state !== 'attack' && this.state !== 'block') {
+        if (inRange && this.state !== 'attack') {
             if (Math.random() < this.settings.attackChance * 0.03) {
                 this.state = 'attack';
                 this.stateTimer = 0;
@@ -203,7 +166,6 @@ export class AIController {
             }
         }
 
-        // 4. Approach if too far
         if (!inRange && this.state !== 'retreat') {
             if (this.stateTimer > this.settings.reactionTime) {
                 this.state = 'approach';
@@ -211,20 +173,17 @@ export class AIController {
             }
         }
 
-        // 5. Retreat timeout — go back to approach after retreating for a while
         if (this.state === 'retreat' && this.stateTimer > 1.5) {
             this.state = 'approach';
             this.stateTimer = 0;
         }
 
-        // 6. Attack timeout — stop attacking after a while
         if (this.state === 'attack' && this.stateTimer > 2) {
             this.state = 'idle';
             this.stateTimer = 0;
             this._comboCount = 0;
         }
 
-        // 7. If at edge, change strategy
         if (atEdge && this.state === 'retreat') {
             this.state = 'attack';
             this.stateTimer = 0;
@@ -236,7 +195,7 @@ export class AIController {
         this.state = 'idle';
         this.stateTimer = 0;
         this.actionCooldown = 0;
-        this._currentActions = this._emptyActions();
         this._comboCount = 0;
     }
 }
+

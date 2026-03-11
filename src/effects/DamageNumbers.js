@@ -1,13 +1,12 @@
 /**
- * DamageNumbers — Floating damage indicators
+ * DamageNumbers - Floating damage indicators
  */
 
 const MAX_NUMBERS = 20;
 
 const STYLES = {
     normal: { color: '#ff4444', outline: '#880000', scale: 1.0 },
-    combo: { color: '#ffd700', outline: '#996600', scale: 1.3 },
-    blocked: { color: '#88bbff', outline: '#334466', scale: 0.8 }
+    combo: { color: '#ffd700', outline: '#996600', scale: 1.3 }
 };
 
 class DamageNumber {
@@ -45,9 +44,8 @@ class DamageNumber {
             return;
         }
         this.y += this.vy * dt;
-        this.vy += 30 * dt; // Slight deceleration
+        this.vy += 30 * dt;
         this.alpha = 1 - (this.lifetime / this.maxLifetime);
-        // Scale pop effect: starts larger, settles
         if (this.lifetime < 0.1) {
             this.scale = (STYLES[this.type]?.scale || 1) * (1 + (0.1 - this.lifetime) * 5);
         }
@@ -62,12 +60,10 @@ class DamageNumber {
         ctx.font = `bold ${fontSize}px Arial, sans-serif`;
         ctx.textAlign = 'center';
 
-        // Outline
         ctx.strokeStyle = style.outline;
         ctx.lineWidth = 3;
         ctx.strokeText(this.value, this.x, this.y);
 
-        // Fill
         ctx.fillStyle = style.color;
         ctx.fillText(this.value, this.x, this.y);
     }
@@ -85,7 +81,7 @@ export class DamageNumbers {
      * @param {number} x
      * @param {number} y
      * @param {number} value - Damage amount
-     * @param {'normal'|'combo'|'blocked'} type
+     * @param {'normal'|'combo'} type
      */
     spawn(x, y, value, type = 'normal') {
         for (let i = 0; i < this.pool.length; i++) {
@@ -107,7 +103,7 @@ export class DamageNumbers {
             this.pool[i].draw(ctx);
         }
         ctx.globalAlpha = 1;
-        ctx.textAlign = 'left'; // Reset
+        ctx.textAlign = 'left';
     }
 
     reset() {

@@ -1,6 +1,6 @@
 export const kobold = {
     id: 'kobold',
-    name: 'Kobold',
+    name: 'Grix',
     spriteBasePath: './images/kobold',
     scale: { x: 2.5, y: 2.5 },
     offset: { x: 160, y: 90 },

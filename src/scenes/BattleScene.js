@@ -1,4 +1,4 @@
-import { CANVAS_WIDTH, CANVAS_HEIGHT, JUMP_VELOCITY, MATCH_DURATION } from '../config/constants.js';
+import { CANVAS_WIDTH, JUMP_VELOCITY, MATCH_DURATION } from '../config/constants.js';
 import { Sprite } from '../entities/Sprite.js';
 import { Fighter, AnimState } from '../entities/Fighter.js';
 import { Projectile } from '../entities/Projectile.js';
@@ -8,10 +8,9 @@ import { ScreenShake } from '../effects/ScreenShake.js';
 import { ParticleSystem } from '../effects/ParticleSystem.js';
 import { DamageNumbers } from '../effects/DamageNumbers.js';
 import { ComboDisplay } from '../effects/ComboDisplay.js';
+import { AIController } from '../ai/AIController.js';
+import { createTowerAIController, isTowerComplete } from '../systems/TowerManager.js';
 
-/**
- * BattleScene — Contém toda a lógica de batalha
- */
 export class BattleScene {
     constructor() {
         this.game = null;
@@ -24,7 +23,6 @@ export class BattleScene {
         this.collision = new CollisionSystem();
         this.combatSystem = new CombatSystem();
 
-        // Effects
         this.screenShake = new ScreenShake();
         this.particles = new ParticleSystem();
         this.damageNumbers = new DamageNumbers();
@@ -38,32 +36,23 @@ export class BattleScene {
         this.playerConfig = null;
         this.enemyConfig = null;
 
-        // Game mode: 'versus', 'arcade', 'training'
         this.gameMode = 'versus';
         this.aiController = null;
+        this.towerState = null;
 
-        // Round system
         this.roundsToWin = 2;
         this.roundsWon = { player: 0, enemy: 0 };
         this.currentRound = 1;
         this.roundTransition = false;
         this.roundTransitionTimer = 0;
 
-        // Stats tracking for post-match
         this.stats = {
-            player: { damageDealt: 0, hits: 0, maxCombo: 0, blocks: 0 },
-            enemy: { damageDealt: 0, hits: 0, maxCombo: 0, blocks: 0 }
+            player: { damageDealt: 0, hits: 0, maxCombo: 0 },
+            enemy: { damageDealt: 0, hits: 0, maxCombo: 0 }
         };
 
-        // Dust emission tracking
         this._dustTimers = { player: 0, enemy: 0 };
-
-        // Projectiles
         this.projectiles = [];
-
-        // Background cache (off-screen canvas)
-        this._bgCache = null;
-
         this.showTrainingHitboxes = false;
 
         this._onKeyDown = this._onKeyDown.bind(this);
@@ -74,13 +63,12 @@ export class BattleScene {
         this.enemyConfig = data.enemyConfig || this.game.enemyConfig;
         this.gameMode = data.gameMode || 'versus';
         this.aiController = data.aiController || null;
+        this.towerState = data.towerState || null;
 
         document.querySelector('.content').classList.remove('hud-hidden');
 
-        // Create entities
         this._createEntities();
 
-        // Reset state
         this.timer = MATCH_DURATION;
         this.timerAccumulator = 0;
         this.gameIsOver = false;
@@ -90,29 +78,26 @@ export class BattleScene {
         this.roundTransition = false;
         this.roundTransitionTimer = 0;
         this.stats = {
-            player: { damageDealt: 0, hits: 0, maxCombo: 0, blocks: 0 },
-            enemy: { damageDealt: 0, hits: 0, maxCombo: 0, blocks: 0 }
+            player: { damageDealt: 0, hits: 0, maxCombo: 0 },
+            enemy: { damageDealt: 0, hits: 0, maxCombo: 0 }
         };
         this._dustTimers = { player: 0, enemy: 0 };
         this.showTrainingHitboxes = false;
 
-        // Reset effects
         this.screenShake.reset();
         this.particles.reset();
         this.damageNumbers.reset();
         this.comboDisplay.reset();
 
-        // Reset UI
         this.game.ui.resetHealthBars();
         this.game.ui.hideResult();
         this.game.ui.updateTimer(this.timer);
+        this.game.ui.setCharacterNames(this.playerConfig.name, this.enemyConfig.name);
         this._updateRoundIndicators();
 
-        // Bind input
         this.game.inputHandler.bind();
         window.addEventListener('keydown', this._onKeyDown);
 
-        // Start music
         if (this.game._audioInitialized) {
             this.game.audio.playMusic('./audio/Perimore.mp3');
         }
@@ -133,7 +118,6 @@ export class BattleScene {
             this.showTrainingHitboxes = !this.showTrainingHitboxes;
         }
 
-        // Audio init on first keypress
         if (!this.game._audioInitialized) {
             this.game.audio.initContext();
             this.game.audio.playMusic('./audio/Perimore.mp3');
@@ -156,11 +140,19 @@ export class BattleScene {
     }
 
     restart() {
+        let aiController = this.aiController;
+        if (this.gameMode === 'arcade' && this.aiController) {
+            aiController = new AIController(this.aiController.difficulty);
+        } else if (this.gameMode === 'tower' && this.towerState) {
+            aiController = createTowerAIController(this.towerState);
+        }
+
         this.enter({
             playerConfig: this.playerConfig,
             enemyConfig: this.enemyConfig,
             gameMode: this.gameMode,
-            aiController: this.aiController
+            aiController,
+            towerState: this.towerState
         });
         this.sceneManager.scenes.pause?.hide();
     }
@@ -211,13 +203,12 @@ export class BattleScene {
         });
         this.player.facingRight = true;
         if (pConfig.projectile) {
-            this.player.onProjectileFire = (f) => this._spawnProjectile(f, pConfig);
+            this.player.onProjectileFire = fighter => this._spawnProjectile(fighter, pConfig);
         }
 
         this.enemy = new Fighter({
             position: { x: 700, y: 0 },
             velocity: { x: 0, y: 0 },
-            color: 'blue',
             image: enemySprites.idle.image,
             framesMax: enemySprites.idle.framesMax,
             scale: eConfig.scale,
@@ -228,8 +219,9 @@ export class BattleScene {
         });
         this.enemy.facingRight = false;
         if (eConfig.projectile) {
-            this.enemy.onProjectileFire = (f) => this._spawnProjectile(f, eConfig);
+            this.enemy.onProjectileFire = fighter => this._spawnProjectile(fighter, eConfig);
         }
+
         this.player.updateAttackBox();
         this.enemy.updateAttackBox();
     }
@@ -237,7 +229,6 @@ export class BattleScene {
     update(deltaTime) {
         if (this.isPaused || this.gameIsOver) return;
 
-        // Round transition pause
         if (this.roundTransition) {
             this.roundTransitionTimer -= deltaTime;
             if (this.roundTransitionTimer <= 0) {
@@ -250,19 +241,13 @@ export class BattleScene {
         const { player, enemy, collision, combatSystem } = this;
         const inputHandler = this.game.inputHandler;
 
-        // Update input system
         inputHandler.update(deltaTime);
-
-        // Update combat system
         combatSystem.update(deltaTime);
-
-        // Update effects
         this.screenShake.update(deltaTime);
         this.particles.update(deltaTime);
         this.damageNumbers.update(deltaTime);
         this.comboDisplay.update(deltaTime);
 
-        // Timer
         this.timerAccumulator += deltaTime;
         if (this.timerAccumulator >= 1) {
             this.timerAccumulator -= 1;
@@ -274,9 +259,8 @@ export class BattleScene {
             }
         }
 
-        // Process fighter inputs
         this._handleFighterInput(player, 'player');
-        if (this.gameMode === 'arcade' && this.aiController) {
+        if ((this.gameMode === 'arcade' || this.gameMode === 'tower') && this.aiController) {
             this._handleAIInput(enemy, deltaTime);
         } else if (this.gameMode === 'training') {
             this._handleTrainingDummy(enemy);
@@ -284,11 +268,9 @@ export class BattleScene {
             this._handleFighterInput(enemy, 'enemy');
         }
 
-        // Update entities before resolving hits so collision matches the rendered frame
         player.update(deltaTime);
         enemy.update(deltaTime);
 
-        // Auto-face opponents toward each other
         if (!player.dead && !enemy.dead) {
             player.facingRight = player.position.x < enemy.position.x;
             enemy.facingRight = enemy.position.x < player.position.x;
@@ -297,109 +279,75 @@ export class BattleScene {
         player.updateAttackBox();
         enemy.updateAttackBox();
 
-        // Dust particles when running on ground
         this._handleDustParticles(player, 'player', deltaTime);
         this._handleDustParticles(enemy, 'enemy', deltaTime);
 
-        // Player hits enemy
-        if (collision.checkAttackHit(player, enemy)) {
-            if (!enemy.isInvulnerable) {
-                const attackData = player.characterConfig?.attacks[player.currentAttack]
-                    || { damage: 20, knockback: { x: 3, y: -2 } };
-                const result = combatSystem.processHit(player, enemy, attackData, 'player');
-                enemy.takeHit(result.damage);
-                this.game.ui.updateHealth('enemy', (enemy.health / enemy.maxHealth) * 100);
-                this.game.audio.playSFX(result.type === 'blocked' ? 'block' : 'hit');
+        if (collision.checkAttackHit(player, enemy) && !enemy.isInvulnerable) {
+            const attackData = player.characterConfig?.attacks[player.currentAttack]
+                || { damage: 20, knockback: { x: 3, y: -2 } };
+            const result = combatSystem.processHit(player, enemy, attackData, 'player');
+            enemy.takeHit(result.damage);
+            this.game.ui.updateHealth('enemy', (enemy.health / enemy.maxHealth) * 100);
+            this.game.audio.playSFX('hit');
 
-                // Visual effects
-                const hitX = enemy.position.x + enemy.width / 2;
-                const hitY = enemy.position.y + enemy.height / 2;
+            const hitX = enemy.position.x + enemy.width / 2;
+            const hitY = enemy.position.y + enemy.height / 2;
+            const combo = combatSystem.getComboCount?.('player') || 0;
+            const isCombo = combo >= 3;
 
-                if (result.type === 'blocked') {
-                    this.screenShake.trigger(3, 0.15);
-                    enemy.triggerShieldHit();
-                    this.particles.emit('shieldHit', hitX, hitY, 12);
-                    this.damageNumbers.spawn(hitX, hitY - 20, result.damage, 'blocked');
-                } else {
-                    const combo = combatSystem.getComboCount?.('player') || 0;
-                    const isCombo = combo >= 3;
-                    this.screenShake.trigger(isCombo ? 8 : 5, isCombo ? 0.3 : 0.2);
-                    this.particles.emit('hit', hitX, hitY, isCombo ? 15 : 10);
-                    this.damageNumbers.spawn(hitX, hitY - 20, result.damage, isCombo ? 'combo' : 'normal');
-                    if (combo >= 2) this.comboDisplay.show(combo, 'player');
-                }
+            this.screenShake.trigger(isCombo ? 8 : 5, isCombo ? 0.3 : 0.2);
+            this.particles.emit('hit', hitX, hitY, isCombo ? 15 : 10);
+            this.damageNumbers.spawn(hitX, hitY - 20, result.damage, isCombo ? 'combo' : 'normal');
+            if (combo >= 2) this.comboDisplay.show(combo, 'player');
 
-                // Track stats
-                this.stats.player.damageDealt += result.damage;
-                this.stats.player.hits++;
-                if (result.type === 'blocked') this.stats.enemy.blocks++;
-                const combo = combatSystem.getComboCount?.('player') || 0;
-                if (combo > this.stats.player.maxCombo) this.stats.player.maxCombo = combo;
-            }
+            this.stats.player.damageDealt += result.damage;
+            this.stats.player.hits++;
+            if (combo > this.stats.player.maxCombo) this.stats.player.maxCombo = combo;
         }
 
-        // Enemy hits player
-        if (collision.checkAttackHit(enemy, player)) {
-            if (!player.isInvulnerable) {
-                const attackData = enemy.characterConfig?.attacks[enemy.currentAttack]
-                    || { damage: 20, knockback: { x: 3, y: -2 } };
-                const result = combatSystem.processHit(enemy, player, attackData, 'enemy');
-                player.takeHit(result.damage);
-                this.game.ui.updateHealth('player', (player.health / player.maxHealth) * 100);
-                this.game.audio.playSFX(result.type === 'blocked' ? 'block' : 'hit');
+        if (collision.checkAttackHit(enemy, player) && !player.isInvulnerable) {
+            const attackData = enemy.characterConfig?.attacks[enemy.currentAttack]
+                || { damage: 20, knockback: { x: 3, y: -2 } };
+            const result = combatSystem.processHit(enemy, player, attackData, 'enemy');
+            player.takeHit(result.damage);
+            this.game.ui.updateHealth('player', (player.health / player.maxHealth) * 100);
+            this.game.audio.playSFX('hit');
 
-                // Visual effects
-                const hitX = player.position.x + player.width / 2;
-                const hitY = player.position.y + player.height / 2;
+            const hitX = player.position.x + player.width / 2;
+            const hitY = player.position.y + player.height / 2;
+            const combo = combatSystem.getComboCount?.('enemy') || 0;
+            const isCombo = combo >= 3;
 
-                if (result.type === 'blocked') {
-                    this.screenShake.trigger(3, 0.15);
-                    player.triggerShieldHit();
-                    this.particles.emit('shieldHit', hitX, hitY, 12);
-                    this.damageNumbers.spawn(hitX, hitY - 20, result.damage, 'blocked');
-                } else {
-                    const combo = combatSystem.getComboCount?.('enemy') || 0;
-                    const isCombo = combo >= 3;
-                    this.screenShake.trigger(isCombo ? 8 : 5, isCombo ? 0.3 : 0.2);
-                    this.particles.emit('hit', hitX, hitY, isCombo ? 15 : 10);
-                    this.damageNumbers.spawn(hitX, hitY - 20, result.damage, isCombo ? 'combo' : 'normal');
-                    if (combo >= 2) this.comboDisplay.show(combo, 'enemy');
-                }
+            this.screenShake.trigger(isCombo ? 8 : 5, isCombo ? 0.3 : 0.2);
+            this.particles.emit('hit', hitX, hitY, isCombo ? 15 : 10);
+            this.damageNumbers.spawn(hitX, hitY - 20, result.damage, isCombo ? 'combo' : 'normal');
+            if (combo >= 2) this.comboDisplay.show(combo, 'enemy');
 
-                // Track stats
-                this.stats.enemy.damageDealt += result.damage;
-                this.stats.enemy.hits++;
-                if (result.type === 'blocked') this.stats.player.blocks++;
-                const combo = combatSystem.getComboCount?.('enemy') || 0;
-                if (combo > this.stats.enemy.maxCombo) this.stats.enemy.maxCombo = combo;
-            }
+            this.stats.enemy.damageDealt += result.damage;
+            this.stats.enemy.hits++;
+            if (combo > this.stats.enemy.maxCombo) this.stats.enemy.maxCombo = combo;
         }
 
-        // Reset attack states
         collision.resetAttackState(player);
         collision.resetAttackState(enemy);
 
-        // Projectile updates and collision
         this._updateProjectiles(deltaTime);
 
-        // Training mode: health regen
         if (this.gameMode === 'training') {
-            enemy.health = enemy.maxHealth;
+            enemy.restoreFullHealth();
             this.game.ui.updateHealth('enemy', 100);
         }
 
-        // Win conditions
         if (enemy.health <= 0 || player.health <= 0) {
             this._endRound();
         }
 
-        // Clear just-pressed flags after all input has been consumed
         inputHandler.endFrame();
     }
 
     _handleDustParticles(fighter, id, deltaTime) {
         if (fighter.dead) return;
-        // Running dust
+
         if (fighter.isGrounded && Math.abs(fighter.velocity.x) > 2) {
             this._dustTimers[id] += deltaTime;
             if (this._dustTimers[id] > 0.08) {
@@ -424,8 +372,6 @@ export class BattleScene {
     _handleTrainingDummy(fighter) {
         if (fighter.dead) return;
 
-        fighter.block(false);
-
         if (!fighter.isDashing && fighter.currentState !== AnimState.TAKE_HIT) {
             fighter.velocity.x = 0;
         }
@@ -440,20 +386,17 @@ export class BattleScene {
             return;
         }
 
-        if (!fighter.isAttacking && !fighter.isBlocking && !fighter.isDashing) {
+        if (!fighter.isAttacking && !fighter.isDashing) {
             fighter.switchSprite(AnimState.IDLE);
         }
     }
+
     _applyAIActions(fighter, actions) {
         const moveSpeed = fighter.characterConfig?.stats?.moveSpeed || 5;
         const jumpVelocity = fighter.characterConfig?.stats?.jumpVelocity || JUMP_VELOCITY;
         const isAttacking = fighter.isAttacking;
 
-        // Block
-        fighter.block(actions.block);
-
-        // Movement
-        if (!isAttacking && !fighter.isBlocking && !fighter.isDashing) {
+        if (!isAttacking && !fighter.isDashing) {
             if (actions.left && fighter.position.x >= 0) {
                 fighter.velocity.x = -moveSpeed;
                 fighter.switchSprite(AnimState.RUN);
@@ -468,20 +411,17 @@ export class BattleScene {
             fighter.velocity.x = 0;
         }
 
-        // Jump/Fall
         if (fighter.velocity.y < 0) {
             fighter.switchSprite(AnimState.JUMP);
         } else if (fighter.velocity.y > 0) {
             fighter.switchSprite(AnimState.FALL);
         }
 
-        // Jump
-        if (actions.jump && fighter.isGrounded && !fighter.isBlocking) {
+        if (actions.jump && fighter.isGrounded) {
             fighter.velocity.y = jumpVelocity;
         }
 
-        // Attacks
-        if (!fighter.isBlocking && !fighter.isDashing) {
+        if (!fighter.isDashing) {
             if (actions.attack1 && !fighter.isAttacking) {
                 fighter.attack('attack1');
             } else if (actions.attack2 && !fighter.isAttacking) {
@@ -489,8 +429,7 @@ export class BattleScene {
             }
         }
 
-        // Dash
-        if (actions.dash && !fighter.isBlocking && !fighter.isDashing) {
+        if (actions.dash && !fighter.isDashing) {
             fighter.dash(actions.dashDirection || 1);
             this.game.audio.playSFX('whoosh');
         }
@@ -498,24 +437,27 @@ export class BattleScene {
 
     _spawnProjectile(fighter, config) {
         const projConfig = config.projectile;
+        const loader = this.game.assetLoader;
+        const moveImg = loader.get(`${config.spriteBasePath}/${projConfig.moveSprite.src}`);
+        const explodeImg = loader.get(`${config.spriteBasePath}/${projConfig.explodeSprite.src}`);
         const scale = projConfig.scale || { x: 2.5, y: 2.5 };
-        const projW = projConfig.collisionBox.width * scale.x;
-        const projH = projConfig.collisionBox.height * scale.y;
+        const projFrameW = moveImg.width / projConfig.moveSprite.framesMax;
+        const projDrawW = projFrameW * scale.x;
+        const projDrawH = moveImg.height * scale.y;
+        const spriteFrameW = (fighter.image.width / fighter.framesMax) * fighter.scale.x;
+        const spriteFrameH = fighter.image.height * fighter.scale.y;
+        const spriteDrawX = fighter.position.x - fighter.offset.x;
+        const spriteDrawY = fighter.position.y - fighter.offset.y;
         const spawnOffset = projConfig.spawnOffset || {
-            x: fighter.width,
-            y: fighter.height / 2 - projH / 2
+            x: spriteFrameW,
+            y: spriteFrameH / 2 - projDrawH / 2
         };
 
         const spawnX = fighter.facingRight
-            ? fighter.position.x + spawnOffset.x
-            : fighter.position.x + fighter.width - spawnOffset.x - projW;
-        const spawnY = fighter.position.y + spawnOffset.y;
-
+            ? spriteDrawX + spawnOffset.x
+            : spriteDrawX + spriteFrameW - spawnOffset.x - projDrawW;
+        const spawnY = spriteDrawY + spawnOffset.y;
         const velocityX = fighter.facingRight ? projConfig.speed : -projConfig.speed;
-
-        const loader = this.game.assetLoader;
-        const moveImg    = loader.get(`${config.spriteBasePath}/${projConfig.moveSprite.src}`);
-        const explodeImg = loader.get(`${config.spriteBasePath}/${projConfig.explodeSprite.src}`);
 
         this.projectiles.push(new Projectile({
             position: { x: spawnX, y: spawnY },
@@ -527,73 +469,59 @@ export class BattleScene {
     }
 
     _updateProjectiles(deltaTime) {
-        this.projectiles = this.projectiles.filter(p => p.active);
+        this.projectiles = this.projectiles.filter(projectile => projectile.active);
 
-        for (const proj of this.projectiles) {
-            proj.update(deltaTime);
+        for (const projectile of this.projectiles) {
+            projectile.update(deltaTime);
 
-            if (proj.hasHit) continue;
+            if (projectile.hasHit) continue;
 
-            const target = proj.owner === this.player ? this.enemy : this.player;
+            const target = projectile.owner === this.player ? this.enemy : this.player;
             if (target.dead || target.isInvulnerable) continue;
 
-            // AABB collision between projectile and target body
-            const px = proj.position.x;
-            const py = proj.position.y;
-            const pw = proj.width;
-            const ph = proj.height;
+            const px = projectile.position.x;
+            const py = projectile.position.y;
+            const pw = projectile.width;
+            const ph = projectile.height;
             const tx = target.position.x;
             const ty = target.position.y;
             const tw = target.width;
             const th = target.height;
 
             if (px < tx + tw && px + pw > tx && py < ty + th && py + ph > ty) {
-                proj.onHit();
+                projectile.onHit();
 
-                const attacker = proj.owner;
+                const attacker = projectile.owner;
                 const isPlayer = attacker === this.player;
                 const side = isPlayer ? 'player' : 'enemy';
                 const result = this.combatSystem.processHit(
-                    attacker, target,
-                    { damage: proj.config.damage, knockback: proj.config.knockback },
+                    attacker,
+                    target,
+                    { damage: projectile.config.damage, knockback: projectile.config.knockback },
                     side
                 );
                 target.takeHit(result.damage);
 
                 const healthKey = isPlayer ? 'enemy' : 'player';
                 this.game.ui.updateHealth(healthKey, (target.health / target.maxHealth) * 100);
-                this.game.audio.playSFX(result.type === 'blocked' ? 'block' : 'hit');
+                this.game.audio.playSFX('hit');
 
                 const hitX = target.position.x + target.width / 2;
                 const hitY = target.position.y + target.height / 2;
-
-                if (result.type === 'blocked') {
-                    this.screenShake.trigger(3, 0.15);
-                    target.triggerShieldHit();
-                    this.particles.emit('shieldHit', hitX, hitY, 12);
-                    this.damageNumbers.spawn(hitX, hitY - 20, result.damage, 'blocked');
-                } else {
-                    this.screenShake.trigger(5, 0.2);
-                    this.particles.emit('hit', hitX, hitY, 10);
-                    this.damageNumbers.spawn(hitX, hitY - 20, result.damage, 'normal');
-                }
+                this.screenShake.trigger(5, 0.2);
+                this.particles.emit('hit', hitX, hitY, 10);
+                this.damageNumbers.spawn(hitX, hitY - 20, result.damage, 'normal');
 
                 this.stats[side].damageDealt += result.damage;
                 this.stats[side].hits++;
-                if (result.type === 'blocked') this.stats[isPlayer ? 'enemy' : 'player'].blocks++;
             }
         }
     }
 
     _endRound() {
-        // Determine round winner
         let roundWinner = null;
-        if (this.player.health === this.enemy.health) {
-            // Draw — no one wins the round
-        } else if (this.player.health > this.enemy.health) {
-            roundWinner = 'player';
-        } else {
-            roundWinner = 'enemy';
+        if (this.player.health !== this.enemy.health) {
+            roundWinner = this.player.health > this.enemy.health ? 'player' : 'enemy';
         }
 
         if (roundWinner) {
@@ -601,23 +529,17 @@ export class BattleScene {
         }
         this._updateRoundIndicators();
 
-        // Check if match is over
-        if (this.roundsWon.player >= this.roundsToWin ||
-            this.roundsWon.enemy >= this.roundsToWin) {
+        if (this.roundsWon.player >= this.roundsToWin || this.roundsWon.enemy >= this.roundsToWin) {
             this._endMatch();
         } else {
-            // Transition to next round
             this.roundTransition = true;
             this.roundTransitionTimer = 2;
             this.currentRound++;
-
-            // Show round text
             this.game.ui.showResult(`Round ${this.currentRound}`);
         }
     }
 
     _startNewRound() {
-        // Reset fighters
         this.player.reset();
         this.enemy.reset();
         this.player.facingRight = true;
@@ -626,11 +548,9 @@ export class BattleScene {
         this.enemy.updateAttackBox();
         this.showTrainingHitboxes = false;
 
-        // Reset timer
         this.timer = MATCH_DURATION;
         this.timerAccumulator = 0;
 
-        // Reset effects
         this.screenShake.reset();
         this.particles.reset();
         this.damageNumbers.reset();
@@ -638,7 +558,6 @@ export class BattleScene {
         this.combatSystem.reset();
         this.projectiles = [];
 
-        // Reset UI
         this.game.ui.resetHealthBars();
         this.game.ui.hideResult();
         this.game.ui.updateTimer(this.timer);
@@ -649,7 +568,6 @@ export class BattleScene {
         this.game.audio.stopMusic();
         this.game.audio.playSFX('victory');
 
-        // Determine winner text
         let winnerText;
         if (this.roundsWon.player === this.roundsWon.enemy) {
             winnerText = 'Empate';
@@ -659,7 +577,15 @@ export class BattleScene {
             winnerText = `${this.enemyConfig.name} Venceu!`;
         }
 
-        // Go to post-match after short delay
+        if (
+            this.gameMode === 'tower'
+            && this.roundsWon.player > this.roundsWon.enemy
+            && this.towerState
+            && isTowerComplete(this.towerState)
+        ) {
+            winnerText = `TORRE CONCLUIDA! ${this.playerConfig.name} Venceu!`;
+        }
+
         setTimeout(() => {
             this.sceneManager.switchTo('postMatch', {
                 winnerText,
@@ -668,29 +594,31 @@ export class BattleScene {
                 enemyConfig: this.enemyConfig,
                 roundsWon: this.roundsWon,
                 gameMode: this.gameMode,
-                aiController: this.aiController
+                aiController: this.aiController,
+                towerState: this.towerState
             });
         }, 1500);
     }
 
     _updateRoundIndicators() {
-        // Update HUD round dots
         const p1Rounds = document.getElementById('p1-rounds');
         const p2Rounds = document.getElementById('p2-rounds');
         if (p1Rounds) {
-            p1Rounds.innerHTML = this._renderRoundDots(this.roundsWon.player);
+            p1Rounds.replaceChildren(this._renderRoundDots(this.roundsWon.player));
         }
         if (p2Rounds) {
-            p2Rounds.innerHTML = this._renderRoundDots(this.roundsWon.enemy);
+            p2Rounds.replaceChildren(this._renderRoundDots(this.roundsWon.enemy));
         }
     }
 
     _renderRoundDots(won) {
-        let html = '';
+        const fragment = document.createDocumentFragment();
         for (let i = 0; i < this.roundsToWin; i++) {
-            html += `<span class="round-dot ${i < won ? 'won' : ''}"></span>`;
+            const dot = document.createElement('span');
+            dot.className = `round-dot${i < won ? ' won' : ''}`;
+            fragment.appendChild(dot);
         }
-        return html;
+        return fragment;
     }
 
     _handleFighterInput(fighter, playerId) {
@@ -701,29 +629,25 @@ export class BattleScene {
         const jumpVelocity = fighter.characterConfig?.stats?.jumpVelocity || JUMP_VELOCITY;
         const isAttacking = fighter.isAttacking;
 
-        // Block
-        fighter.block(inputHandler.isPressed('block', playerId));
-
-        // Dash
-        if (!fighter.isBlocking && !fighter.isDashing) {
+        if (!fighter.isDashing) {
             const dashDir = inputHandler.consumeDash(playerId);
             if (dashDir !== 0) {
                 fighter.dash(dashDir);
                 this.game.audio.playSFX('whoosh');
-                // Dash particles
                 const dashX = fighter.position.x + fighter.width / 2;
                 const dashY = fighter.position.y + fighter.height / 2;
                 this.particles.emit('dash', dashX, dashY, 6, dashDir > 0 ? Math.PI : 0);
             }
         }
 
-        // Movement
-        if (!isAttacking && !fighter.isBlocking && !fighter.isDashing) {
+        if (!isAttacking && !fighter.isDashing) {
             if (inputHandler.isDirectionActive('left', playerId) && fighter.position.x >= 0) {
                 fighter.velocity.x = -moveSpeed;
                 fighter.switchSprite(AnimState.RUN);
-            } else if (inputHandler.isDirectionActive('right', playerId) &&
-                fighter.position.x <= CANVAS_WIDTH - fighter.width) {
+            } else if (
+                inputHandler.isDirectionActive('right', playerId)
+                && fighter.position.x <= CANVAS_WIDTH - fighter.width
+            ) {
                 fighter.velocity.x = moveSpeed;
                 fighter.switchSprite(AnimState.RUN);
             } else {
@@ -734,22 +658,17 @@ export class BattleScene {
             fighter.velocity.x = 0;
         }
 
-        // Jump/Fall
         if (fighter.velocity.y < 0) {
             fighter.switchSprite(AnimState.JUMP);
         } else if (fighter.velocity.y > 0) {
             fighter.switchSprite(AnimState.FALL);
         }
 
-        // Jump input
-        if (inputHandler.isPressed('jump', playerId) &&
-            fighter.isGrounded &&
-            !fighter.isBlocking) {
+        if (inputHandler.isPressed('jump', playerId) && fighter.isGrounded) {
             fighter.velocity.y = jumpVelocity;
         }
 
-        // Attack inputs
-        if (!fighter.isBlocking && !fighter.isDashing) {
+        if (!fighter.isDashing) {
             if (inputHandler.wasJustPressed('attack1', playerId) && !fighter.isAttacking) {
                 fighter.attack('attack1');
             } else if (inputHandler.wasJustPressed('attack2', playerId) && !fighter.isAttacking) {
@@ -764,43 +683,30 @@ export class BattleScene {
         ctx.fillStyle = 'black';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Apply screen shake
         const shake = this.screenShake.getOffset();
         ctx.save();
         ctx.translate(shake.x, shake.y);
 
-        // Background
         this.background.update(ctx, this.game._lastDeltaTime || 0);
-
-        // Animated shop
         this.shop.update(ctx, this.game._lastDeltaTime || 0);
 
-        // Fighters
         this.player.draw(ctx);
         this.enemy.draw(ctx);
 
-        // Training mode: show hitboxes
         if (this.gameMode === 'training' && this.showTrainingHitboxes) {
             this._drawHitboxes(ctx);
         }
 
-        // Projectiles
-        for (const proj of this.projectiles) {
-            proj.draw(ctx);
+        for (const projectile of this.projectiles) {
+            projectile.draw(ctx);
         }
 
-        // Particles
         this.particles.render(ctx);
-
-        // Damage numbers
         this.damageNumbers.render(ctx);
-
-        // Combo display
         this.comboDisplay.render(ctx);
 
-        ctx.restore(); // Undo shake translation
+        ctx.restore();
 
-        // Round transition overlay
         if (this.roundTransition) {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -808,16 +714,13 @@ export class BattleScene {
     }
 
     _drawHitboxes(ctx) {
-        // Draw collision boxes
         [this.player, this.enemy].forEach(fighter => {
             if (fighter.dead) return;
 
-            // Body hitbox
             ctx.strokeStyle = '#00ff00';
             ctx.lineWidth = 1;
             ctx.strokeRect(fighter.position.x, fighter.position.y, fighter.width, fighter.height);
 
-            // Attack box
             if (fighter.isAttacking && fighter.isInHitFrame) {
                 ctx.strokeStyle = '#ff0000';
                 ctx.lineWidth = 2;
@@ -831,9 +734,3 @@ export class BattleScene {
         });
     }
 }
-
-
-
-
-
-

@@ -6,21 +6,21 @@ export const kenji = {
   offset: { x: 231, y: 170 },
   spriteFacingRight: false,
   stats: {
-    health: 100,
-    moveSpeed: 5.5,
+    health: 96,
+    moveSpeed: 5.6,
     jumpVelocity: -20,
     weight: 0.9
   },
   attacks: {
     attack1: {
-      damage: 18,
+      damage: 17,
       knockback: { x: 3, y: -2 },
       hitFrames: { start: 1, end: 3 },
       attackBox: { offset: { x: 100, y: 50 }, width: 145, height: 50 },
       cooldown: 0
     },
     attack2: {
-      damage: 28,
+      damage: 24,
       knockback: { x: 5, y: -3 },
       hitFrames: { start: 1, end: 3 },
       attackBox: { offset: { x: 90, y: 30 }, width: 160, height: 60 },
@@ -37,6 +37,6 @@ export const kenji = {
     takeHit: { src: 'Take hit.png', framesMax: 3 },
     death: { src: 'Death.png', framesMax: 7 }
   },
-  collisionBox: { width: 50, height: 150 },
-  shieldBox: { x: -18, y: -10, width: 86, height: 168 }
+  collisionBox: { width: 50, height: 150 }
 };
+

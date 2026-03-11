@@ -22,21 +22,21 @@ export class UIManager {
 
   updateTimer(seconds) {
     if (this.elements.timer) {
-      this.elements.timer.innerHTML = Math.ceil(seconds);
+      this.elements.timer.textContent = Math.ceil(seconds);
     }
   }
 
   showResult(text) {
     if (this.elements.displayText) {
       this.elements.displayText.style.display = 'flex';
-      this.elements.displayText.innerHTML = text;
+      this.elements.displayText.textContent = text;
     }
   }
 
   hideResult() {
     if (this.elements.displayText) {
       this.elements.displayText.style.display = 'none';
-      this.elements.displayText.innerHTML = '';
+      this.elements.displayText.textContent = '';
     }
   }
 
@@ -58,22 +58,11 @@ export class UIManager {
     }
   }
 
-  determineWinner(player, enemy) {
-    if (player.health === enemy.health) {
-      this.showResult('Empate');
-    } else if (player.health > enemy.health) {
-      this.showResult('Player 1 Venceu');
-    } else {
-      this.showResult('Player 2 Venceu');
-    }
-  }
-
-  showHUD() {
-    document.querySelector('.content')?.classList.remove('hud-hidden');
-  }
-
-  hideHUD() {
-    document.querySelector('.content')?.classList.add('hud-hidden');
+  setCharacterNames(playerName, enemyName) {
+    const p1 = document.getElementById('p1-name');
+    const p2 = document.getElementById('p2-name');
+    if (p1) p1.textContent = playerName.toUpperCase();
+    if (p2) p2.textContent = enemyName.toUpperCase();
   }
 
   resetHealthBars() {

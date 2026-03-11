@@ -1,5 +1,5 @@
 /**
- * ParticleSystem — Pool-based particle system for hit sparks, block effects, dust, dash trails
+ * ParticleSystem - Pool-based particle system for hit sparks, dust, and dash trails
  */
 
 const POOL_SIZE = 150;
@@ -12,22 +12,6 @@ const PARTICLE_PRESETS = {
         lifetimeMin: 0.15, lifetimeMax: 0.4,
         gravity: 300,
         spread: Math.PI * 2
-    },
-    block: {
-        colors: ['#4488ff', '#66aaff', '#88ccff', '#aaddff'],
-        speedMin: 60, speedMax: 180,
-        sizeMin: 2, sizeMax: 4,
-        lifetimeMin: 0.2, lifetimeMax: 0.35,
-        gravity: 100,
-        spread: Math.PI * 0.8
-    },
-    shieldHit: {
-        colors: ['#ff2200', '#ff5500', '#ff8800', '#ffbb00', '#ffffff'],
-        speedMin: 80, speedMax: 220,
-        sizeMin: 2, sizeMax: 5,
-        lifetimeMin: 0.15, lifetimeMax: 0.4,
-        gravity: 150,
-        spread: Math.PI * 1.2
     },
     dust: {
         colors: ['#8B7355', '#A0926B', '#C4B899', '#7A6A53'],
@@ -87,7 +71,7 @@ class Particle {
         this.x += this.vx * dt;
         this.y += this.vy * dt;
         this.alpha = 1 - (this.lifetime / this.maxLifetime);
-        this.size *= (1 - dt * 2); // Shrink over time
+        this.size *= (1 - dt * 2);
         if (this.size < 0.5) this.size = 0.5;
     }
 
@@ -111,11 +95,11 @@ export class ParticleSystem {
         for (let i = 0; i < this.pool.length; i++) {
             if (!this.pool[i].active) return this.pool[i];
         }
-        return null; // Pool exhausted
+        return null;
     }
 
     /**
-     * @param {'hit'|'block'|'dust'|'dash'} type
+     * @param {'hit'|'dust'|'dash'} type
      * @param {number} x
      * @param {number} y
      * @param {number} count
@@ -140,7 +124,10 @@ export class ParticleSystem {
                 y + (Math.random() - 0.5) * 10,
                 Math.cos(angle) * speed,
                 Math.sin(angle) * speed,
-                size, color, lifetime, preset.gravity
+                size,
+                color,
+                lifetime,
+                preset.gravity
             );
         }
     }

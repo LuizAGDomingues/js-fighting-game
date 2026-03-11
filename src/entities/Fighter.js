@@ -18,10 +18,12 @@ export const AnimState = {
 };
 
 export class Fighter extends Sprite {
+  #health;
+  #maxHealth;
+
   constructor({
     position,
     velocity,
-    color = 'red',
     image,
     scale = { x: 1, y: 1 },
     framesMax = 1,
@@ -35,7 +37,6 @@ export class Fighter extends Sprite {
     this.velocity = velocity;
     this.width = characterConfig?.collisionBox?.width || FIGHTER_WIDTH;
     this.height = characterConfig?.collisionBox?.height || FIGHTER_HEIGHT;
-    this.lastKey = null;
     this.baseAttackBox = {
       offset: { ...attackBox.offset },
       width: attackBox.width,
@@ -47,11 +48,10 @@ export class Fighter extends Sprite {
       width: attackBox.width,
       height: attackBox.height
     };
-    this.color = color;
     this.isAttacking = false;
     this.currentAttack = null;
-    this.health = characterConfig?.stats?.health || MAX_HEALTH;
-    this.maxHealth = this.health;
+    this.#health = characterConfig?.stats?.health || MAX_HEALTH;
+    this.#maxHealth = this.#health;
     this.currentState = AnimState.IDLE;
     this.animationComplete = false;
     this.sprites = sprites;
@@ -75,6 +75,14 @@ export class Fighter extends Sprite {
     this._initialVelocity = { x: velocity.x, y: velocity.y };
 
     this.updateAttackBox();
+  }
+
+  get health() {
+    return this.#health;
+  }
+
+  get maxHealth() {
+    return this.#maxHealth;
   }
 
   draw(ctx) {
@@ -264,15 +272,18 @@ export class Fighter extends Sprite {
   takeHit(damage = BASE_DAMAGE) {
     if (this.isInvulnerable) return;
 
-    this.health -= damage;
+    this.#health = Math.max(0, this.#health - damage);
     this.isDashing = false;
 
-    if (this.health <= 0) {
-      this.health = 0;
+    if (this.#health <= 0) {
       this.switchSprite(AnimState.DEATH);
     } else {
       this.switchSprite(AnimState.TAKE_HIT);
     }
+  }
+
+  restoreFullHealth() {
+    this.#health = this.#maxHealth;
   }
 
   switchSprite(sprite) {
@@ -304,7 +315,7 @@ export class Fighter extends Sprite {
     this.position.y = this._initialPosition.y;
     this.velocity.x = this._initialVelocity.x;
     this.velocity.y = this._initialVelocity.y;
-    this.health = this.maxHealth;
+    this.restoreFullHealth();
     this.dead = false;
     this.isAttacking = false;
     this.hitRegistered = false;

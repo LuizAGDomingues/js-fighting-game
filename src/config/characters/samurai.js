@@ -1,6 +1,6 @@
 export const samurai = {
     id: 'samurai',
-    name: 'Samurai',
+    name: 'Musashi',
     spriteBasePath: './images/samurai',
     scale: { x: 5.0, y: 5.0 },
     offset: { x: 215, y: 330 },

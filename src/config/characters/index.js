@@ -8,8 +8,9 @@ import { medievalKing } from './medievalKing.js';
 import { evilWizard3 } from './evilWizard3.js';
 import { huntress2 } from './huntress2.js';
 import { wizardPack } from './wizardPack.js';
+import { deepFreeze } from '../../utils/deepFreeze.js';
 
-export const CHARACTER_ROSTER = [
+export const CHARACTER_ROSTER = deepFreeze([
   samuraiMack,
   kenji,
   evilWizard,
@@ -20,7 +21,7 @@ export const CHARACTER_ROSTER = [
   evilWizard3,
   huntress2,
   wizardPack
-];
+]);
 
 export function getCharacterById(id) {
   return CHARACTER_ROSTER.find(c => c.id === id);

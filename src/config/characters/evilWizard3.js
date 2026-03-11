@@ -1,12 +1,12 @@
 export const evilWizard3 = {
     id: 'evilWizard3',
-    name: 'Evil Wizard III',
+    name: 'Morvaine',
     spriteBasePath: './images/evilWizard3',
     scale: { x: 2.5, y: 2.5 },
     offset: { x: 160, y: 90 },
     stats: {
-        health: 80,
-        moveSpeed: 4,
+        health: 84,
+        moveSpeed: 4.2,
         jumpVelocity: -20,
         weight: 0.8
     },
@@ -39,14 +39,14 @@ export const evilWizard3 = {
     projectile: {
         moveSprite:    { src: 'Projectile/Moving.png',  framesMax: 4 },
         explodeSprite: { src: 'Projectile/Explode.png', framesMax: 5 },
-        speed: 7,
-        damage: 25,
+        speed: 6.5,
+        damage: 21,
         knockback: { x: 6, y: -3 },
-        spawnFrame: 6,
-        spawnOffset: { x: 145, y: -20 },
+        spawnFrame: 8,
+        spawnOffset: { x: 240, y: 70 },
         scale: { x: 2.5, y: 2.5 },
         collisionBox: { width: 30, height: 30 }
     },
-    collisionBox: { width: 50, height: 150 },
-    shieldBox: { x: -24, y: -4, width: 98, height: 150 }
+    collisionBox: { width: 50, height: 150 }
 };
+

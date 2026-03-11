@@ -78,41 +78,6 @@ export class SFXGenerator {
     osc.stop(now + 0.1);
   }
 
-  block() {
-    const ctx = this.ctx;
-    const now = ctx.currentTime;
-
-    // Metallic clang: high sine with fast decay
-    const osc = ctx.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(800, now);
-    osc.frequency.exponentialRampToValueAtTime(400, now + 0.1);
-
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-
-    // Add slight ring with second oscillator
-    const osc2 = ctx.createOscillator();
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(1200, now);
-    osc2.frequency.exponentialRampToValueAtTime(600, now + 0.08);
-
-    const gain2 = ctx.createGain();
-    gain2.gain.setValueAtTime(0.15, now);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.1);
-    osc2.start(now);
-    osc2.stop(now + 0.08);
-  }
-
   whoosh() {
     const ctx = this.ctx;
     const now = ctx.currentTime;
@@ -151,7 +116,7 @@ export class SFXGenerator {
     const now = ctx.currentTime;
 
     // Ascending tone sequence
-    const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
+    const notes = [523, 659, 784, 1047];
     notes.forEach((freq, i) => {
       const osc = ctx.createOscillator();
       osc.type = 'sine';
