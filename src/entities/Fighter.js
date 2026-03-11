@@ -1,5 +1,4 @@
-﻿import { Sprite } from './Sprite.js';
-import { EnergyShield } from '../effects/EnergyShield.js';
+import { Sprite } from './Sprite.js';
 import {
   GRAVITY, CANVAS_WIDTH, CANVAS_HEIGHT,
   FIGHTER_WIDTH, FIGHTER_HEIGHT,
@@ -15,8 +14,7 @@ export const AnimState = {
   ATTACK1: 'attack1',
   ATTACK2: 'attack2',
   TAKE_HIT: 'takeHit',
-  DEATH: 'death',
-  BLOCK: 'block'
+  DEATH: 'death'
 };
 
 export class Fighter extends Sprite {
@@ -63,24 +61,16 @@ export class Fighter extends Sprite {
     this.weight = characterConfig?.stats?.weight || 1.0;
     this.spriteFacingRight = characterConfig?.spriteFacingRight ?? true;
 
-    // Block state
-    this.isBlocking = false;
-    this.shieldHitTimer = 0;
-
-    // Dash state
     this.isDashing = false;
     this.dashTimer = 0;
     this.dashCooldownTimer = 0;
     this.dashDirection = 0;
     this.iFrameTimer = 0;
 
-    // Attack cooldown
     this.attackCooldownTimer = 0;
-
-    // Facing direction (true = right, false = left)
     this.facingRight = true;
+    this.onProjectileFire = null;
 
-    // Initial position for reset
     this._initialPosition = { x: position.x, y: position.y };
     this._initialVelocity = { x: velocity.x, y: velocity.y };
 
@@ -90,7 +80,6 @@ export class Fighter extends Sprite {
   draw(ctx) {
     if (!this.image || !this.image.complete) return;
 
-    // Dash visual: semi-transparent during i-frames
     if (this.iFrameTimer > 0) {
       ctx.globalAlpha = 0.4;
     }
@@ -109,8 +98,6 @@ export class Fighter extends Sprite {
       ctx.scale(-1, 1);
       ctx.translate(-(this.position.x + this.width / 2), 0);
     }
-    // Slight tint while blocking
-    if (this.isBlocking) ctx.globalAlpha *= 0.8;
 
     ctx.drawImage(
       this.image,
@@ -124,14 +111,7 @@ export class Fighter extends Sprite {
       drawH
     );
     ctx.restore();
-
-    // Restore alpha before drawing the shield
     ctx.globalAlpha = 1.0;
-
-    // Energy shield (drawn on top, always with clean alpha)
-    if (this.isBlocking) {
-      EnergyShield.draw(ctx, this);
-    }
   }
 
   animateFrames(deltaTime) {
@@ -147,13 +127,19 @@ export class Fighter extends Sprite {
           this.framesCurrent = 0;
         }
       }
+
+      const projConfig = this.characterConfig?.projectile;
+      if (projConfig && this.isAttacking && !this.hitRegistered &&
+          this.framesCurrent === projConfig.spawnFrame && this.onProjectileFire) {
+        this.hitRegistered = true;
+        this.onProjectileFire(this);
+      }
     }
   }
 
   update(deltaTime) {
     if (!this.dead) this.animateFrames(deltaTime);
 
-    // Dash logic
     if (this.isDashing) {
       this.dashTimer -= deltaTime;
       this.velocity.x = DASH_SPEED * this.dashDirection;
@@ -163,17 +149,13 @@ export class Fighter extends Sprite {
       }
     }
 
-    // Cooldown timers
     if (this.dashCooldownTimer > 0) this.dashCooldownTimer -= deltaTime;
     if (this.iFrameTimer > 0) this.iFrameTimer -= deltaTime;
     if (this.attackCooldownTimer > 0) this.attackCooldownTimer -= deltaTime;
-    if (this.shieldHitTimer > 0) this.shieldHitTimer -= deltaTime;
 
-    // Apply velocity
     this.position.x += this.velocity.x;
     this.position.y += this.velocity.y;
 
-    // Gravity
     if (this.position.y + this.height + this.velocity.y >= CANVAS_HEIGHT - FLOOR_OFFSET) {
       this.velocity.y = 0;
       this.position.y = FLOOR_Y;
@@ -181,7 +163,6 @@ export class Fighter extends Sprite {
       this.velocity.y += GRAVITY;
     }
 
-    // Keep fighters on-screen even if a state bug or stacked input spikes vertical velocity.
     if (this.position.y < 0) {
       this.position.y = 0;
       if (this.velocity.y < 0) {
@@ -189,7 +170,6 @@ export class Fighter extends Sprite {
       }
     }
 
-    // Enforce boundaries
     if (this.position.x < 0) this.position.x = 0;
     if (this.position.x > CANVAS_WIDTH - this.width) {
       this.position.x = CANVAS_WIDTH - this.width;
@@ -215,7 +195,6 @@ export class Fighter extends Sprite {
 
   _getCurrentAttackData() {
     if (!this.characterConfig) {
-      // Fallback to sprite-embedded hitFrames
       const spriteData = this.sprites[this.currentState];
       if (spriteData?.hitFrames) return { hitFrames: spriteData.hitFrames, attackBox: this.attackBox };
       return null;
@@ -227,22 +206,21 @@ export class Fighter extends Sprite {
 
   updateAttackBox() {
     const attackConfig = this._getCurrentAttackData()?.attackBox || this.baseAttackBox;
-
-    // A box começa perto do corpo (cobre corpo a corpo) e se estende
-    // até offset.x + width (alcance máximo preservado).
-    const NEAR_OFFSET = 10;
-    const startOffset = Math.min(NEAR_OFFSET, attackConfig.offset.x);
-    const effectiveWidth = attackConfig.offset.x + attackConfig.width - startOffset;
+    const contactPadding = Math.max(
+      0,
+      attackConfig.contactPadding ?? (attackConfig.offset.x - 10)
+    );
 
     this.attackBox.offset = { ...attackConfig.offset };
-    this.attackBox.width = effectiveWidth;
+    this.attackBox.width = attackConfig.width + contactPadding;
     this.attackBox.height = attackConfig.height;
 
     if (this.facingRight) {
-      this.attackBox.position.x = this.position.x + startOffset;
+      this.attackBox.position.x =
+        this.position.x + this.attackBox.offset.x - contactPadding;
     } else {
       this.attackBox.position.x =
-        this.position.x + this.width - startOffset - effectiveWidth;
+        this.position.x + this.width - this.attackBox.offset.x - attackConfig.width;
     }
     this.attackBox.position.y = this.position.y + this.attackBox.offset.y;
   }
@@ -250,16 +228,14 @@ export class Fighter extends Sprite {
   attack(type = 'attack1') {
     if (this.currentState === AnimState.TAKE_HIT ||
       this.currentState === AnimState.DEATH ||
-      this.isBlocking || this.isDashing) {
+      this.isDashing) {
       return;
     }
     if (this.attackCooldownTimer > 0) return;
 
     const animState = type === 'attack2' ? AnimState.ATTACK2 : AnimState.ATTACK1;
 
-    // Check if we have the sprite for this attack
     if (!this.sprites[animState]) {
-      // Fallback to attack1 if attack2 not available
       if (type === 'attack2') return this.attack('attack1');
       return;
     }
@@ -269,28 +245,14 @@ export class Fighter extends Sprite {
     this.hitRegistered = false;
     this.currentAttack = type;
 
-    // Set cooldown from character config
     if (this.characterConfig?.attacks[type]?.cooldown) {
       this.attackCooldownTimer = this.characterConfig.attacks[type].cooldown / 1000;
     }
   }
 
-  block(active) {
-    if (this.dead) return;
-    if (active && !this.isAttacking && !this.isDashing) {
-      this.isBlocking = true;
-    } else {
-      this.isBlocking = false;
-    }
-  }
-
-  triggerShieldHit() {
-    this.shieldHitTimer = 0.25;
-  }
-
   dash(direction) {
     if (this.dead || this.isDashing || this.dashCooldownTimer > 0) return;
-    if (this.isAttacking || this.isBlocking) return;
+    if (this.isAttacking) return;
 
     this.isDashing = true;
     this.dashTimer = DASH_DURATION;
@@ -300,11 +262,9 @@ export class Fighter extends Sprite {
   }
 
   takeHit(damage = BASE_DAMAGE) {
-    // i-frames protect from damage
     if (this.isInvulnerable) return;
 
     this.health -= damage;
-    this.isBlocking = false;
     this.isDashing = false;
 
     if (this.health <= 0) {
@@ -316,20 +276,16 @@ export class Fighter extends Sprite {
   }
 
   switchSprite(sprite) {
-    // Death animation can't be interrupted
     if (this.currentState === AnimState.DEATH) {
       if (this.animationComplete) this.dead = true;
       return;
     }
 
-    // Attack animations play fully before switching
     if ((this.currentState === AnimState.ATTACK1 || this.currentState === AnimState.ATTACK2) &&
       !this.animationComplete) return;
 
-    // TakeHit animation plays fully before switching
     if (this.currentState === AnimState.TAKE_HIT && !this.animationComplete) return;
 
-    // Switch to new sprite if different
     if (this.currentState !== sprite) {
       const spriteData = this.sprites[sprite];
       if (!spriteData) return;
@@ -353,7 +309,6 @@ export class Fighter extends Sprite {
     this.isAttacking = false;
     this.hitRegistered = false;
     this.animationComplete = false;
-    this.isBlocking = false;
     this.isDashing = false;
     this.dashTimer = 0;
     this.dashCooldownTimer = 0;
@@ -365,5 +320,3 @@ export class Fighter extends Sprite {
     this.updateAttackBox();
   }
 }
-
-

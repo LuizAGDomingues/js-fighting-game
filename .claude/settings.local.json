@@ -1,7 +1,42 @@
 {
   "permissions": {
     "allow": [
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(cp \"implementations/Evil Wizard 3/Sprites/Idle.png\" images/evilWizard3/)",
+      "Bash(cp \"implementations/Evil Wizard 3/Sprites/Walk.png\" images/evilWizard3/)",
+      "Bash(cp \"implementations/Evil Wizard 3/Sprites/Run.png\" images/evilWizard3/)",
+      "Bash(cp \"implementations/Evil Wizard 3/Sprites/Attack.png\" images/evilWizard3/)",
+      "Bash(cp \"implementations/Evil Wizard 3/Sprites/Death.png\" images/evilWizard3/)",
+      "Bash(cp \"implementations/Evil Wizard 3/Sprites/Get hit.png\" images/evilWizard3/)",
+      "Bash(cp \"implementations/Evil Wizard 3/Sprites/Jump.png\" images/evilWizard3/)",
+      "Bash(cp \"implementations/Evil Wizard 3/Sprites/Fall.png\" images/evilWizard3/)",
+      "Bash(cp \"implementations/Evil Wizard 3/Sprites/Projectile/Moving.png\" images/evilWizard3/Projectile/)",
+      "Bash(cp \"implementations/Evil Wizard 3/Sprites/Projectile/Explode.png\" images/evilWizard3/Projectile/)",
+      "Bash(cp \"implementations/Huntress 2/Sprites/Character/Idle.png\" images/huntress2/)",
+      "Bash(cp \"implementations/Huntress 2/Sprites/Character/Run.png\" images/huntress2/)",
+      "Bash(cp \"implementations/Huntress 2/Sprites/Character/Attack.png\" images/huntress2/)",
+      "Bash(cp \"implementations/Huntress 2/Sprites/Character/Death.png\" images/huntress2/)",
+      "Bash(cp \"implementations/Huntress 2/Sprites/Character/Get Hit.png\" images/huntress2/)",
+      "Bash(cp \"implementations/Huntress 2/Sprites/Character/Jump.png\" images/huntress2/)",
+      "Bash(cp \"implementations/Huntress 2/Sprites/Character/Fall.png\" images/huntress2/)",
+      "Bash(cp \"implementations/Huntress 2/Sprites/Arrow/Move.png\" images/huntress2/Arrow/)",
+      "Bash(cp \"implementations/Huntress 2/Sprites/Arrow/Static.png\" images/huntress2/Arrow/)",
+      "Bash(cp \"implementations/Wizard Pack/Idle.png\" images/wizardPack/)",
+      "Bash(cp \"implementations/Wizard Pack/Run.png\" images/wizardPack/)",
+      "Bash(cp \"implementations/Wizard Pack/Attack1.png\" images/wizardPack/)",
+      "Bash(cp \"implementations/Wizard Pack/Attack2.png\" images/wizardPack/)",
+      "Bash(cp \"implementations/Wizard Pack/Death.png\" images/wizardPack/)",
+      "Bash(cp \"implementations/Wizard Pack/Hit.png\" images/wizardPack/)",
+      "Bash(cp \"implementations/Wizard Pack/Jump.png\" images/wizardPack/)",
+      "Bash(cp \"implementations/Wizard Pack/Fall.png\" images/wizardPack/)",
+      "Bash(cp \"implementations/FREE_Samurai 2D Pixel Art v1.2/Sprites/IDLE.png\" images/samurai/)",
+      "Bash(cp \"implementations/FREE_Samurai 2D Pixel Art v1.2/Sprites/RUN.png\" images/samurai/)",
+      "Bash(cp \"implementations/FREE_Samurai 2D Pixel Art v1.2/Sprites/ATTACK 1.png\" images/samurai/)",
+      "Bash(cp \"implementations/FREE_Samurai 2D Pixel Art v1.2/Sprites/HURT.png\" images/samurai/)",
+      "Bash(cp \"implementations/FREE_Kobold Warrior 2D Pixel Art/Sprites/with_outline/IDLE.png\" images/kobold/)",
+      "Bash(cp \"implementations/FREE_Kobold Warrior 2D Pixel Art/Sprites/with_outline/RUN.png\" images/kobold/)",
+      "Bash(cp \"implementations/FREE_Kobold Warrior 2D Pixel Art/Sprites/with_outline/ATTACK 1.png\" images/kobold/)",
+      "Bash(cp \"implementations/Gemini_Generated_Image_gyqwsigyqwsigyqw.png\" images/shield/EnergyShield.png)"
     ]
   }
 }

@@ -1,4 +1,4 @@
-﻿import { DOUBLE_TAP_WINDOW } from '../config/constants.js';
+import { DOUBLE_TAP_WINDOW } from '../config/constants.js';
 
 export class InputHandler {
   constructor() {
@@ -12,20 +12,17 @@ export class InputHandler {
         right: 'd',
         jump: 'w',
         attack1: 'space',
-        attack2: 'e',
-        block: 's'
+        attack2: 'e'
       },
       enemy: {
         left: 'arrowleft',
         right: 'arrowright',
         jump: 'arrowup',
         attack1: 'arrowdown',
-        attack2: 'enter',
-        block: 'shift'
+        attack2: 'enter'
       }
     };
 
-    // Double-tap tracking for dash
     this._doubleTap = {
       player: { key: null, timer: 0, triggered: false },
       enemy: { key: null, timer: 0, triggered: false }
@@ -49,7 +46,6 @@ export class InputHandler {
     this._clearInputs();
   }
 
-
   _clearInputs() {
     this.keyStates = {};
     this.keyJustPressed = {};
@@ -63,6 +59,7 @@ export class InputHandler {
   _onBlur() {
     this._clearInputs();
   }
+
   _normalizeKey(event) {
     if (event.code === 'Space') return 'space';
     if (event.key === ' ') return 'space';
@@ -83,20 +80,17 @@ export class InputHandler {
       event.preventDefault();
     }
 
-    // Track "just pressed" only on the initial non-repeat press
     if (!this.keyStates[key] && !event.repeat) {
       this.keyJustPressed[key] = true;
     }
 
     this.keyStates[key] = true;
 
-    // Track last direction key for each player
     for (const playerId of ['player', 'enemy']) {
       const bindings = this.bindings[playerId];
       if (key === bindings.left || key === bindings.right) {
         this.lastKeys[playerId] = key;
 
-        // Double-tap detection for dash
         if (!event.repeat) {
           const dt = this._doubleTap[playerId];
           if (dt.key === key && dt.timer > 0) {
@@ -123,7 +117,6 @@ export class InputHandler {
   }
 
   update(deltaTime) {
-    // Update double-tap timers
     for (const playerId of ['player', 'enemy']) {
       const dt = this._doubleTap[playerId];
       if (dt.timer > 0) {
@@ -138,7 +131,6 @@ export class InputHandler {
   }
 
   endFrame() {
-    // Clear "just pressed" flags AFTER all systems have read them
     this.keyJustPressed = {};
   }
 
@@ -164,7 +156,6 @@ export class InputHandler {
       dt.triggered = false;
       dt.key = null;
       dt.timer = 0;
-      // Return direction: -1 for left, 1 for right
       const bindings = this.bindings[playerId];
       if (key === bindings.left) return -1;
       if (key === bindings.right) return 1;
@@ -176,6 +167,3 @@ export class InputHandler {
     return this.lastKeys[playerId];
   }
 }
-
-
-

@@ -38,5 +38,5 @@ export const kenji = {
     death: { src: 'Death.png', framesMax: 7 }
   },
   collisionBox: { width: 50, height: 150 },
-  shieldBox: { x: -10, y: 0, width: 70, height: 150 }
+  shieldBox: { x: -18, y: -10, width: 86, height: 168 }
 };

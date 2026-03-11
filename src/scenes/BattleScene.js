@@ -1,6 +1,7 @@
-﻿import { CANVAS_WIDTH, CANVAS_HEIGHT, JUMP_VELOCITY, MATCH_DURATION } from '../config/constants.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, JUMP_VELOCITY, MATCH_DURATION } from '../config/constants.js';
 import { Sprite } from '../entities/Sprite.js';
 import { Fighter, AnimState } from '../entities/Fighter.js';
+import { Projectile } from '../entities/Projectile.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import { CombatSystem } from '../systems/CombatSystem.js';
 import { ScreenShake } from '../effects/ScreenShake.js';
@@ -9,7 +10,7 @@ import { DamageNumbers } from '../effects/DamageNumbers.js';
 import { ComboDisplay } from '../effects/ComboDisplay.js';
 
 /**
- * BattleScene â€” ContÃ©m toda a lÃ³gica de batalha
+ * BattleScene — Contém toda a lógica de batalha
  */
 export class BattleScene {
     constructor() {
@@ -56,6 +57,9 @@ export class BattleScene {
 
         // Dust emission tracking
         this._dustTimers = { player: 0, enemy: 0 };
+
+        // Projectiles
+        this.projectiles = [];
 
         // Background cache (off-screen canvas)
         this._bgCache = null;
@@ -206,6 +210,9 @@ export class BattleScene {
             characterConfig: pConfig
         });
         this.player.facingRight = true;
+        if (pConfig.projectile) {
+            this.player.onProjectileFire = (f) => this._spawnProjectile(f, pConfig);
+        }
 
         this.enemy = new Fighter({
             position: { x: 700, y: 0 },
@@ -220,6 +227,9 @@ export class BattleScene {
             characterConfig: eConfig
         });
         this.enemy.facingRight = false;
+        if (eConfig.projectile) {
+            this.enemy.onProjectileFire = (f) => this._spawnProjectile(f, eConfig);
+        }
         this.player.updateAttackBox();
         this.enemy.updateAttackBox();
     }
@@ -369,6 +379,9 @@ export class BattleScene {
         collision.resetAttackState(player);
         collision.resetAttackState(enemy);
 
+        // Projectile updates and collision
+        this._updateProjectiles(deltaTime);
+
         // Training mode: health regen
         if (this.gameMode === 'training') {
             enemy.health = enemy.maxHealth;
@@ -483,11 +496,100 @@ export class BattleScene {
         }
     }
 
+    _spawnProjectile(fighter, config) {
+        const projConfig = config.projectile;
+        const scale = projConfig.scale || { x: 2.5, y: 2.5 };
+        const projW = projConfig.collisionBox.width * scale.x;
+        const projH = projConfig.collisionBox.height * scale.y;
+        const spawnOffset = projConfig.spawnOffset || {
+            x: fighter.width,
+            y: fighter.height / 2 - projH / 2
+        };
+
+        const spawnX = fighter.facingRight
+            ? fighter.position.x + spawnOffset.x
+            : fighter.position.x + fighter.width - spawnOffset.x - projW;
+        const spawnY = fighter.position.y + spawnOffset.y;
+
+        const velocityX = fighter.facingRight ? projConfig.speed : -projConfig.speed;
+
+        const loader = this.game.assetLoader;
+        const moveImg    = loader.get(`${config.spriteBasePath}/${projConfig.moveSprite.src}`);
+        const explodeImg = loader.get(`${config.spriteBasePath}/${projConfig.explodeSprite.src}`);
+
+        this.projectiles.push(new Projectile({
+            position: { x: spawnX, y: spawnY },
+            velocityX,
+            spriteImages: { move: moveImg, explode: explodeImg },
+            config: projConfig,
+            owner: fighter
+        }));
+    }
+
+    _updateProjectiles(deltaTime) {
+        this.projectiles = this.projectiles.filter(p => p.active);
+
+        for (const proj of this.projectiles) {
+            proj.update(deltaTime);
+
+            if (proj.hasHit) continue;
+
+            const target = proj.owner === this.player ? this.enemy : this.player;
+            if (target.dead || target.isInvulnerable) continue;
+
+            // AABB collision between projectile and target body
+            const px = proj.position.x;
+            const py = proj.position.y;
+            const pw = proj.width;
+            const ph = proj.height;
+            const tx = target.position.x;
+            const ty = target.position.y;
+            const tw = target.width;
+            const th = target.height;
+
+            if (px < tx + tw && px + pw > tx && py < ty + th && py + ph > ty) {
+                proj.onHit();
+
+                const attacker = proj.owner;
+                const isPlayer = attacker === this.player;
+                const side = isPlayer ? 'player' : 'enemy';
+                const result = this.combatSystem.processHit(
+                    attacker, target,
+                    { damage: proj.config.damage, knockback: proj.config.knockback },
+                    side
+                );
+                target.takeHit(result.damage);
+
+                const healthKey = isPlayer ? 'enemy' : 'player';
+                this.game.ui.updateHealth(healthKey, (target.health / target.maxHealth) * 100);
+                this.game.audio.playSFX(result.type === 'blocked' ? 'block' : 'hit');
+
+                const hitX = target.position.x + target.width / 2;
+                const hitY = target.position.y + target.height / 2;
+
+                if (result.type === 'blocked') {
+                    this.screenShake.trigger(3, 0.15);
+                    target.triggerShieldHit();
+                    this.particles.emit('shieldHit', hitX, hitY, 12);
+                    this.damageNumbers.spawn(hitX, hitY - 20, result.damage, 'blocked');
+                } else {
+                    this.screenShake.trigger(5, 0.2);
+                    this.particles.emit('hit', hitX, hitY, 10);
+                    this.damageNumbers.spawn(hitX, hitY - 20, result.damage, 'normal');
+                }
+
+                this.stats[side].damageDealt += result.damage;
+                this.stats[side].hits++;
+                if (result.type === 'blocked') this.stats[isPlayer ? 'enemy' : 'player'].blocks++;
+            }
+        }
+    }
+
     _endRound() {
         // Determine round winner
         let roundWinner = null;
         if (this.player.health === this.enemy.health) {
-            // Draw â€” no one wins the round
+            // Draw — no one wins the round
         } else if (this.player.health > this.enemy.health) {
             roundWinner = 'player';
         } else {
@@ -534,6 +636,7 @@ export class BattleScene {
         this.damageNumbers.reset();
         this.comboDisplay.reset();
         this.combatSystem.reset();
+        this.projectiles = [];
 
         // Reset UI
         this.game.ui.resetHealthBars();
@@ -681,6 +784,11 @@ export class BattleScene {
             this._drawHitboxes(ctx);
         }
 
+        // Projectiles
+        for (const proj of this.projectiles) {
+            proj.draw(ctx);
+        }
+
         // Particles
         this.particles.render(ctx);
 
@@ -723,6 +831,7 @@ export class BattleScene {
         });
     }
 }
+
 
 
 
