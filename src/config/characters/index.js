@@ -8,6 +8,9 @@ import { medievalKing } from './medievalKing.js';
 import { evilWizard3 } from './evilWizard3.js';
 import { huntress2 } from './huntress2.js';
 import { wizardPack } from './wizardPack.js';
+import { arcaneArcher } from './arcaneArcher.js';
+import { impAxeDemon } from './impAxeDemon.js';
+import { skeletonEnemy } from './skeletonEnemy.js';
 import { deepFreeze } from '../../utils/deepFreeze.js';
 
 export const CHARACTER_ROSTER = deepFreeze([
@@ -20,7 +23,10 @@ export const CHARACTER_ROSTER = deepFreeze([
   medievalKing,
   evilWizard3,
   huntress2,
-  wizardPack
+  wizardPack,
+  arcaneArcher,
+  impAxeDemon,
+  skeletonEnemy
 ]);
 
 export function getCharacterById(id) {
